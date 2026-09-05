@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoL Build Calculator</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #11151e;
+    --surface2: #181e2b;
+    --border: #1e2740;
+    --gold: #c89b3c;
+    --gold-dim: #7a5e25;
+    --blue: #4a8fc2;
+    --blue-dim: #1f3d5a;
+    --red: #c24a4a;
+    --green: #4ac276;
+    --text: #d8dde8;
+    --text-muted: #6c7a96;
+    --text-dim: #404d63;
+    --jhin: #c2a44a;
+    --sett: #c25a4a;
+    --vlad: #8b4ac2;
+    --allstats: #4ac2b8;
+    --font-display: 'Georgia', serif;
+    --font-ui: 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(180deg, #080a0f 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--gold-dim);
+    padding: 20px 32px 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    font-weight: normal;
+  }
+
+  header .patch-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 62px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 62px);
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+  .sidebar-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    padding: 0 16px 8px;
+    font-family: var(--font-mono);
+  }
+
+  .champion-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    text-align: left;
+    border-left: 3px solid transparent;
+  }
+
+  .champion-btn:hover { background: var(--surface2); color: var(--text); }
+
+  .champion-btn.active-jhin { border-left-color: var(--jhin); color: var(--jhin); background: rgba(194,164,74,0.06); }
+  .champion-btn.active-sett { border-left-color: var(--sett); color: var(--sett); background: rgba(194,90,74,0.06); }
+  .champion-btn.active-vlad { border-left-color: var(--vlad); color: var(--vlad); background: rgba(139,74,194,0.06); }
+  .champion-btn.active-allstats { border-left-color: var(--allstats); color: var(--allstats); background: rgba(74,194,184,0.06); }
+
+  .champ-icon {
+    width: 30px; height: 30px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .icon-jhin { background: rgba(194,164,74,0.15); border: 1px solid rgba(194,164,74,0.3); }
+  .icon-sett { background: rgba(194,90,74,0.15); border: 1px solid rgba(194,90,74,0.3); }
+  .icon-vlad { background: rgba(139,74,194,0.15); border: 1px solid rgba(139,74,194,0.3); }
+  .icon-allstats { background: rgba(74,194,184,0.15); border: 1px solid rgba(74,194,184,0.3); }
+
+  .champ-name { font-size: 13px; font-weight: 600; }
+  .champ-role { font-size: 11px; color: var(--text-dim); }
+
+  /* MAIN */
+  .main { padding: 24px 28px; overflow-x: hidden; }
+
+  .champion-panel { display: none; }
+  .champion-panel.active { display: block; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-icon {
+    width: 52px; height: 52px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .panel-header h2 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: normal;
+    letter-spacing: 0.02em;
+  }
+
+  .panel-header .subtitle { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+  .color-jhin { color: var(--jhin); }
+  .color-sett { color: var(--sett); }
+  .color-vlad { color: var(--vlad); }
+  .color-allstats { color: var(--allstats); }
+
+  /* TWO COLUMN LAYOUT */
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 900px) { .calc-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* INPUTS */
+  .input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .input-row label {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex: 1;
+    white-space: nowrap;
+  }
+
+  .input-row input[type="number"],
+  .input-row select {
+    width: 90px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 5px 8px;
+    text-align: right;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .input-row input[type="number"]:focus,
+  .input-row select:focus { border-color: var(--gold-dim); }
+
+  .input-row select { text-align: left; width: 110px; }
+
+  /* ITEM CHECKBOXES */
+  .items-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .item-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+  }
+
+  .item-toggle:hover { border-color: var(--gold-dim); }
+  .item-toggle.checked { border-color: var(--gold-dim); background: rgba(200, 155, 60, 0.06); }
+
+  .item-toggle input { display: none; }
+
+  .item-check {
+    width: 16px; height: 16px;
+    border: 1px solid var(--text-dim);
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    transition: all 0.12s;
+  }
+
+  .item-toggle.checked .item-check {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+    color: #fff;
+  }
+
+  .item-info { flex: 1; }
+  .item-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .item-stats-line { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+  .item-cost { font-size: 11px; color: var(--gold); font-family: var(--font-mono); }
+
+  /* PASSIVE CONFIG */
+  .passive-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .passive-box .passive-name {
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-mono);
+  }
+
+  .passive-box .passive-desc {
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  /* RESULTS */
+  .results-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .results-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .stat-block {
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+  }
+
+  .stat-block .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    margin-bottom: 4px;
+  }
+
+  .stat-block .stat-value {
+    font-size: 22px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .stat-block .stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+
+  .stat-block.highlight-gold .stat-value { color: var(--gold); }
+  .stat-block.highlight-blue .stat-value { color: var(--blue); }
+  .stat-block.highlight-green .stat-value { color: var(--green); }
+  .stat-block.highlight-red .stat-value { color: var(--red); }
+  .stat-block.highlight-purple .stat-value { color: var(--vlad); }
+
+  /* ABILITY BREAKDOWN */
+  .ability-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .ability-table th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    font-weight: normal;
+  }
+  .ability-table td {
+    padding: 7px 10px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(30,39,64,0.5);
+    font-family: var(--font-mono);
+  }
+  .ability-table tr:last-child td { border-bottom: none; }
+  .ability-table .ability-name { color: var(--text-muted); font-size: 12px; }
+  .ability-table .dmg-value { color: var(--text); }
+  .ability-table .dmg-note { color: var(--text-dim); font-size: 11px; }
+
+  /* FORMULA BLOCK */
+  .formula {
+    background: rgba(0,0,0,0.3);
+    border-left: 3px solid var(--border);
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    border-radius: 0 4px 4px 0;
+    margin-top: 6px;
+    line-height: 1.7;
+  }
+
+  .formula .val { color: var(--text-muted); }
+  .formula .result { color: var(--gold); font-weight: bold; }
+
+  /* DIVIDER */
+  .section-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0;
+  }
+
+  .section-divider span {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .section-divider::before, .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* TOOLTIP */
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-wrap .tooltip-content {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    left: 0; top: calc(100% + 6px);
+    background: #090b0f;
+    border: 1px solid var(--gold-dim);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    width: 220px;
+    pointer-events: none;
+  }
+  .tooltip-wrap:hover .tooltip-content { display: block; }
+
+  .help-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-dim);
+    font-size: 9px;
+    cursor: help;
+    font-family: var(--font-mono);
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+
+  /* DATA + OPTIMIZER */
+  .data-status { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:var(--text-dim); display:inline-block; }
+  .status-dot.ok { background:var(--green); box-shadow:0 0 8px rgba(74,194,118,.4); }
+  .status-dot.warn { background:var(--gold); }
+  .status-dot.bad { background:var(--red); }
+  .action-btn, .file-btn {
+    background:var(--surface2); border:1px solid var(--gold-dim); color:var(--gold);
+    border-radius:4px; padding:7px 10px; font:11px var(--font-mono); cursor:pointer;
+  }
+  .action-btn:hover, .file-btn:hover { border-color:var(--gold); background:rgba(200,155,60,.08); }
+  .action-btn.primary { background:rgba(200,155,60,.12); }
+  .action-btn:disabled { opacity:.45; cursor:not-allowed; }
+  .item-toolbar { display:grid; grid-template-columns:1fr 130px; gap:8px; margin-bottom:10px; }
+  .item-toolbar input, .item-toolbar select, .optimizer-controls input, .optimizer-controls select {
+    width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:4px;
+    color:var(--text); font:12px var(--font-mono); padding:6px 8px; outline:none;
+  }
+  .item-toolbar input:focus, .item-toolbar select:focus,
+  .optimizer-controls input:focus, .optimizer-controls select:focus { border-color:var(--gold-dim); }
+  .item-toggle { position:relative; }
+  .item-toggle img { width:32px; height:32px; border-radius:4px; border:1px solid var(--border); }
+  .item-passive { font-size:10px; color:var(--text-dim); line-height:1.35; margin-top:2px; }
+  .item-model-badge { font:9px var(--font-mono); color:var(--green); border:1px solid rgba(74,194,118,.35); padding:1px 4px; border-radius:3px; }
+  .item-fallback-badge { font:9px var(--font-mono); color:var(--gold); border:1px solid rgba(200,155,60,.45); padding:1px 4px; border-radius:3px; }
+  .item-stats-badge { font:9px var(--font-mono); color:var(--text-dim); border:1px solid var(--border); padding:1px 4px; border-radius:3px; }
+  .item-risk-badge { font:9px var(--font-mono); color:var(--red); border:1px solid rgba(194,74,74,.45); padding:1px 4px; border-radius:3px; }
+  .item-group { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .item-group-title { display:flex; justify-content:space-between; align-items:center; padding:4px 2px; color:var(--gold); font:10px var(--font-mono); text-transform:uppercase; letter-spacing:.08em; border-bottom:1px solid var(--border); }
+  .item-group-title span { color:var(--text-dim); }
+  .item-id { display:block; color:var(--text-dim); font:9px var(--font-mono); margin-top:1px; }
+  .optimizer-card { background:linear-gradient(135deg,var(--surface),rgba(200,155,60,.025)); border-color:var(--gold-dim); margin-bottom:20px; }
+  .optimizer-head { display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:14px; }
+  .optimizer-title { font-family:var(--font-display); font-size:18px; color:var(--gold); }
+  .optimizer-subtitle { color:var(--text-muted); font-size:11px; margin-top:3px; max-width:780px; }
+  .optimizer-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin-bottom:12px; }
+  .opt-control label { display:block; color:var(--text-dim); font:10px var(--font-mono); text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+  .optimizer-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .optimizer-note { color:var(--text-dim); font-size:10px; line-height:1.55; }
+  .top-builds { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+  .build-row { display:grid; grid-template-columns:36px minmax(260px,1fr) 150px 86px; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:9px 10px; }
+  .build-rank { font:700 16px var(--font-mono); color:var(--gold); }
+  .build-items { display:flex; gap:5px; flex-wrap:wrap; }
+  .build-chip { display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,.25); border:1px solid var(--border); border-radius:4px; padding:3px 6px; font-size:10px; }
+  .build-chip img { width:22px; height:22px; border-radius:3px; }
+  .build-score { font:700 14px var(--font-mono); text-align:right; }
+  .build-cost { color:var(--gold); font:11px var(--font-mono); text-align:right; }
+  .source-line { margin-top:8px; font:10px var(--font-mono); color:var(--text-dim); overflow-wrap:anywhere; }
+  .source-line a { color:var(--blue); text-decoration:none; }
+  .warning-box { border-left:3px solid var(--gold); background:rgba(200,155,60,.06); padding:8px 10px; color:var(--text-muted); font-size:11px; margin:8px 0; }
+  .loading-line { color:var(--text-muted); font:11px var(--font-mono); padding:8px 0; }
+  .checkbox-inline { display:flex; align-items:center; gap:6px; color:var(--text-muted); font-size:11px; }
+  .checkbox-inline input { width:auto; }
+  @media (max-width:760px) {
+    header { align-items:flex-start; flex-wrap:wrap; }
+    .data-status { margin-left:0; width:100%; }
+    .build-row { grid-template-columns:30px 1fr; }
+    .build-score,.build-cost { text-align:left; grid-column:2; }
+  }
+
+
+  .stat-objective-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin-top:10px; }
+  .stat-objective-pill { border:1px solid var(--border); background:var(--surface2); border-radius:4px; padding:8px 10px; font:11px var(--font-mono); color:var(--text-muted); cursor:pointer; text-align:left; }
+  .stat-objective-pill:hover { border-color:var(--gold-dim); color:var(--text); }
+  .stat-objective-pill.active { border-color:var(--allstats); color:var(--allstats); background:rgba(74,194,184,.06); }
+  .allstats-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin:12px 0; }
+  .allstats-kpi { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:10px 12px; }
+  .allstats-kpi .k { color:var(--text-dim); font:10px var(--font-mono); text-transform:uppercase; letter-spacing:.07em; }
+  .allstats-kpi .v { color:var(--allstats); font:700 20px var(--font-mono); margin-top:3px; }
+  .eligibility-ok { color:var(--green); }
+  .eligibility-no { color:var(--red); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔ LoL Build Calculator</h1>
+  <span class="patch-badge" id="patch-badge">Live data</span>
+  <div class="data-status">
+    <span class="status-dot" id="status-dot"></span>
+    <span class="patch-badge" id="data-status">Loading…</span>
+    <button class="action-btn" id="refresh-riot" type="button">Refresh data</button>
+    <button class="action-btn" id="export-normalized" type="button" disabled>Export JSON</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Champions</div>
+      <button class="champion-btn active-jhin" onclick="switchChamp('jhin')">
+        <div class="champ-icon icon-jhin">🎭</div>
+        <div>
+          <div class="champ-name">Jhin</div>
+          <div class="champ-role">Marksman · Bot</div>
+        </div>
+      </button>
+      <button class="champion-btn" onclick="switchChamp('sett')">
+        <div class="champ-icon icon-sett">👊</div>
+        <div>
+          <div class="champ-name">Sett</div>
+          <div class="champ-role">Fighter · Top</div>
+        </div>
+      </button>
+      <button class="champion-btn" onclick="switchChamp('vlad')">
+        <div class="champ-icon icon-vlad">🩸</div>
+        <div>
+          <div class="champ-name">Vladimir</div>
+          <div class="champ-role">Mage · Mid/Top</div>
+        </div>
+      </button>
+      <button class="champion-btn" onclick="switchChamp('allstats')">
+        <div class="champ-icon icon-allstats">Σ</div>
+        <div>
+          <div class="champ-name">All Champions</div>
+          <div class="champ-role">Maximum sheet stats</div>
+        </div>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Data</div>
+      <div style="padding:0 16px;font-size:11px;color:var(--text-dim);line-height:1.6">
+        <label class="file-btn">Load item.json<input id="local-item-json" type="file" accept="application/json,.json" hidden></label>
+        <div class="source-line" id="source-url"></div>
+        <div class="source-line" id="auto-update-line">Auto-updates hourly.</div>
+        <div class="source-line" id="adapter-audit-line"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ========================== JHIN ========================== -->
+    <div class="champion-panel active" id="panel-jhin">
+      <div class="panel-header">
+        <div class="panel-icon icon-jhin" style="font-size:32px">🎭</div>
+        <div>
+          <h2 class="color-jhin">Jhin <span style="font-size:14px; color:var(--text-muted)">— Maximum Sheet AD</span></h2>
+          <div class="subtitle">Max sheet AD · no runes or external buffs</div>
+        </div>
+      </div>
+
+      <div class="calc-grid">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Jhin Setup</div>
+            <div class="input-row">
+              <label>Level (1–18)</label>
+              <input type="number" id="jhin-level" min="1" max="18" value="18" oninput="calcJhin()">
+            </div>
+            <div class="input-row">
+              <label>Bot quest Berserker's Greaves slot</label>
+              <select id="jhin-quest-boot" onchange="calcJhin()">
+                <option value="0">No — six items only</option>
+                <option value="1">Yes — separate seventh slot</option>
+              </select>
+            </div>
+            <div class="optimizer-note" style="margin-top:10px">Yun Tal trained · Flurry active · Muramana transformed · Crit ≤100%</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Items</div>
+            <div class="item-toolbar">
+              <input id="jhin-item-search" type="search" placeholder="Search AD-relevant items…" oninput="renderItemToggles('jhin')">
+              <select id="jhin-item-sort" onchange="renderItemToggles('jhin')"><option value="category">Category</option><option value="score">Sheet-AD contribution</option><option value="name">Name</option><option value="cost">Cost</option></select>
+            </div>
+            <div class="items-grid" id="jhin-items"><!-- populated by JS --></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Whisper</div>
+            <div class="passive-box">
+              <div class="passive-name">Every Moment Matters</div>
+              <div class="passive-desc">Bonus AD = pre-passive AD × (level + crit + attack-speed scaling).</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Formula</div>
+            <div id="jhin-formula-trace" class="formula">— load Riot data to calculate —</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card optimizer-card">
+        <div class="optimizer-head"><div><div class="optimizer-title">Max Jhin AD</div></div></div>
+        <div class="optimizer-actions"><button class="action-btn primary" id="jhin-optimize-btn" type="button" onclick="optimizeJhinMaxAD()">Find absolute max AD</button><span class="optimizer-note" id="jhin-optimizer-status">Load Riot data to optimize.</span></div>
+        <div id="jhin-optimizer-results"></div>
+      </div>
+
+      <div class="results-card">
+        <div class="results-title">Selected Build — Sheet AD</div>
+        <div class="stat-grid" id="jhin-stat-grid"><!-- populated by JS --></div>
+      </div>
+    </div><!-- /jhin -->
+
+
+    <!-- ========================== SETT ========================== -->
+    <div class="champion-panel" id="panel-sett">
+      <div class="panel-header">
+        <div class="panel-icon icon-sett" style="font-size:32px">👊</div>
+        <div>
+          <h2 class="color-sett">Sett <span style="font-size:14px; color:var(--text-muted)">— The Boss</span></h2>
+          <div class="subtitle">Fighter · Top · Patch 26.14 base: 60 AD, 670 HP, 33 Armor, 28 MR | AD/lvl: 3.75 | HP/lvl: 114</div>
+        </div>
+      </div>
+
+      <div class="calc-grid">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Champion Level & Ranks</div>
+            <div class="input-row">
+              <label>Level (1–18)</label>
+              <input type="number" id="sett-level" min="1" max="18" value="18" oninput="calcSett()">
+            </div>
+            <div class="input-row">
+              <label>Q Rank (1–5)</label>
+              <input type="number" id="sett-qrank" min="1" max="5" value="5" oninput="calcSett()">
+            </div>
+            <div class="input-row">
+              <label>W Rank (1–5)</label>
+              <input type="number" id="sett-wrank" min="1" max="5" value="5" oninput="calcSett()">
+            </div>
+            <div class="input-row">
+              <label>E Rank (1–5)</label>
+              <input type="number" id="sett-erank" min="1" max="5" value="5" oninput="calcSett()">
+            </div>
+            <div class="input-row">
+              <label>R Rank (1–3)</label>
+              <input type="number" id="sett-rrank" min="1" max="3" value="3" oninput="calcSett()">
+            </div>
+            <div class="input-row">
+              <label>Current Grit (HP)</label>
+              <input type="number" id="sett-grit" min="0" max="9999" value="1000" oninput="calcSett()">
+            </div>
+            <div class="input-row">
+              <label>Target bonus HP (R)</label>
+              <input type="number" id="sett-target-bonushp" min="0" max="10000" value="2000" oninput="calcSett()">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Items</div>
+            <div class="item-toolbar">
+              <input id="sett-item-search" type="search" placeholder="Search all relevant items…" oninput="renderItemToggles('sett')">
+              <select id="sett-item-sort" onchange="renderItemToggles('sett')"><option value="category">Category</option><option value="score">Relevant first</option><option value="name">Name</option><option value="cost">Cost</option></select>
+            </div>
+            <div class="items-grid" id="sett-items"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Passive — Pit Grit</div>
+            <div class="passive-box">
+              <div class="passive-name">Heavy Hands</div>
+              <div class="passive-desc">
+                Alternates L/R punch. Right punch: +50 range (175 total), attacks at 8× speed, deals <strong>5–90</strong> (based on lvl) <strong>+ 55% bonus AD</strong> bonus phys damage.<br>
+                (Values: lvl1=5 → lvl18=90 linearly.)
+              </div>
+            </div>
+            <div class="passive-box">
+              <div class="passive-name">Grit Regen</div>
+              <div class="passive-desc">
+                Gains HP regen scaling with missing HP. Stores 100% of post-mitigation damage taken as Grit, cap = <strong>50% max HP</strong>. Grit decays 30%/s after 4s.
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Formula</div>
+            <div id="sett-formula-trace" class="formula">— select items to see calculation —</div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="card optimizer-card">
+        <div class="optimizer-head"><div><div class="optimizer-title">Build Optimizer</div></div></div>
+        <div class="optimizer-controls">
+          <div class="opt-control"><label>Objective</label><select id="sett-objective"><option value="w">Maximum-grit W true damage</option><option value="heartsteel">Heartsteel hit</option><option value="rightPunch">Right punch</option><option value="twoPunch">Left + right punch</option><option value="ehp">Physical effective HP</option></select></div>
+          <div class="opt-control"><label>Item slots</label><input id="sett-opt-slots" type="number" min="1" max="6" value="6"></div>
+          <div class="opt-control"><label>Gold cap (0 = none)</label><input id="sett-opt-gold" type="number" min="0" value="0"></div>
+          <div class="opt-control"><label>Heartsteel stacked HP</label><input id="sett-heartsteel-stacks" type="number" min="0" value="1000" oninput="calcSett()"></div>
+          <div class="opt-control"><label>Own missing HP %</label><input id="sett-missing-hp" type="number" min="0" max="100" value="50" oninput="calcSett()"></div>
+          <div class="opt-control"><label>Target armor</label><input id="sett-target-armor" type="number" min="-100" value="100" oninput="calcSett()"></div>
+          <div class="opt-control"><label>Target max HP</label><input id="sett-target-hp" type="number" min="1" value="3000" oninput="calcSett()"></div>
+          <div class="opt-control"><label>Overlord Retribution</label><select id="sett-overlord-mode" onchange="calcSett()"><option value="auto">Auto from missing HP</option><option value="12">Force 12% max</option><option value="0">Ignore</option></select></div>
+        </div>
+        <div class="optimizer-actions"><button class="action-btn primary" id="sett-optimize-btn" type="button" onclick="optimizeBuild('sett')">Find best builds</button><span class="optimizer-note" id="sett-optimizer-status">Load Riot data to optimize.</span></div>
+        <div id="sett-optimizer-results"></div>
+      </div>
+
+      <div class="results-card">
+        <div class="results-title">Stats</div>
+        <div class="stat-grid" id="sett-stat-grid"></div>
+      </div>
+
+      <div class="results-card">
+        <div class="results-title">Modeled Damage Breakdown (After Target Mitigation)</div>
+        <table class="ability-table">
+          <thead><tr><th>Ability</th><th>Damage</th><th>Notes</th></tr></thead>
+          <tbody id="sett-ability-table"></tbody>
+        </table>
+      </div>
+    </div><!-- /sett -->
+
+
+    <!-- ========================== VLAD ========================== -->
+    <div class="champion-panel" id="panel-vlad">
+      <div class="panel-header">
+        <div class="panel-icon icon-vlad" style="font-size:32px">🩸</div>
+        <div>
+          <h2 class="color-vlad">Vladimir <span style="font-size:14px; color:var(--text-muted)">— The Crimson Reaper</span></h2>
+          <div class="subtitle">Mage · Mid/Top · Patch 26.14 base: 55 AD, 600 HP, 24 Armor, 30 MR | HP/lvl: 110 | no mana/mana items</div>
+        </div>
+      </div>
+
+      <div class="calc-grid">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Champion Level & Ranks</div>
+            <div class="input-row">
+              <label>Level (1–18)</label>
+              <input type="number" id="vlad-level" min="1" max="18" value="18" oninput="calcVlad()">
+            </div>
+            <div class="input-row">
+              <label>Q Rank (1–5)</label>
+              <input type="number" id="vlad-qrank" min="1" max="5" value="5" oninput="calcVlad()">
+            </div>
+            <div class="input-row">
+              <label>E Rank (1–5)</label>
+              <input type="number" id="vlad-erank" min="1" max="5" value="5" oninput="calcVlad()">
+            </div>
+            <div class="input-row">
+              <label>R Rank (1–3)</label>
+              <input type="number" id="vlad-rrank" min="1" max="3" value="3" oninput="calcVlad()">
+            </div>
+            <div class="input-row">
+              <label>Crimson Rush active?</label>
+              <select id="vlad-crimsonrush" onchange="calcVlad()">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Items</div>
+            <div class="item-toolbar">
+              <input id="vlad-item-search" type="search" placeholder="Search all relevant items…" oninput="renderItemToggles('vlad')">
+              <select id="vlad-item-sort" onchange="renderItemToggles('vlad')"><option value="category">Category</option><option value="score">Relevant first</option><option value="name">Name</option><option value="cost">Cost</option></select>
+            </div>
+            <div class="items-grid" id="vlad-items"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Passive — Crimson Pact</div>
+            <div class="passive-box">
+              <div class="passive-name">AP → HP Conversion</div>
+              <div class="passive-desc">
+                Every <strong>1 AP</strong> → <strong>+1.6 bonus HP</strong><br>
+                Every <strong>100 bonus HP</strong> → <strong>+3.3 AP</strong><br>
+                (These bonuses do NOT multiply each other — only item/rune-sourced stats convert.)
+              </div>
+            </div>
+            <div class="passive-box">
+              <div class="passive-name">Crimson Rush (Q passive)</div>
+              <div class="passive-desc">
+                After 2 Qs in a short window, next Q is empowered: deals <strong>85% more</strong> damage and gains its empowered missing-health heal. Toggle above to include empowered Q.
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Formula</div>
+            <div id="vlad-formula-trace" class="formula">— select items to see calculation —</div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="card optimizer-card">
+        <div class="optimizer-head"><div><div class="optimizer-title">Build Optimizer</div></div></div>
+        <div class="optimizer-controls">
+          <div class="opt-control"><label>Objective</label><select id="vlad-objective"><option value="combo">Q + full E + R combo</option><option value="q">Q damage</option><option value="empQ">Empowered Q damage</option><option value="e">Full-charge E</option><option value="hp">Maximum HP</option><option value="sustained">10-second spell throughput</option></select></div>
+          <div class="opt-control"><label>Item slots</label><input id="vlad-opt-slots" type="number" min="1" max="6" value="6"></div>
+          <div class="opt-control"><label>Gold cap (0 = none)</label><input id="vlad-opt-gold" type="number" min="0" value="0"></div>
+          <div class="opt-control"><label>Target MR</label><input id="vlad-target-mr" type="number" min="-100" value="100" oninput="calcVlad()"></div>
+          <div class="opt-control"><label>Target max HP</label><input id="vlad-target-hp" type="number" min="1" value="3000" oninput="calcVlad()"></div>
+          <div class="opt-control"><label>Target current HP %</label><input id="vlad-target-current" type="number" min="0" max="100" value="50" oninput="calcVlad()"></div>
+          <div class="opt-control"><label>Combat seconds</label><input id="vlad-combat-seconds" type="number" min="0" max="20" step="0.5" value="4" oninput="calcVlad()"></div>
+          <div class="opt-control"><label>Bloodletter stacks</label><input id="vlad-bloodletter-stacks" type="number" min="0" max="4" value="4" oninput="calcVlad()"></div>
+        </div>
+        <div class="optimizer-actions"><button class="action-btn primary" id="vlad-optimize-btn" type="button" onclick="optimizeBuild('vlad')">Find best builds</button><span class="optimizer-note" id="vlad-optimizer-status">Load Riot data to optimize.</span></div>
+        <div id="vlad-optimizer-results"></div>
+      </div>
+
+      <div class="results-card">
+        <div class="results-title">Stats</div>
+        <div class="stat-grid" id="vlad-stat-grid"></div>
+      </div>
+
+      <div class="results-card">
+        <div class="results-title">Damage / Healing</div>
+        <table class="ability-table">
+          <thead><tr><th>Ability</th><th>Damage / Heal</th><th>Notes</th></tr></thead>
+          <tbody id="vlad-ability-table"></tbody>
+        </table>
+      </div>
+    </div><!-- /vlad -->
+
+
+    <!-- ========================== ALL CHAMPIONS / STAT MAXIMA ========================== -->
+    <div class="champion-panel" id="panel-allstats">
+      <div class="panel-header">
+        <div class="panel-icon icon-allstats" style="font-size:28px">Σ</div>
+        <div>
+          <h2 class="color-allstats">All Champions <span style="font-size:14px; color:var(--text-muted)">— Stat Max</span></h2>
+          <div class="subtitle">Max item stats by champion and lane</div>
+        </div>
+      </div>
+
+      <div class="calc-grid">
+        <div class="card">
+          <div class="card-title">Setup</div>
+          <div class="input-row"><label>Champion</label><select id="allstats-champion" style="width:180px" onchange="allStatsChampionChanged()"><option>Loading…</option></select></div>
+          <div class="input-row"><label>Level</label><input id="allstats-level" type="number" min="1" max="18" value="18" onchange="renderAllStatsPreview()"></div>
+          <div class="input-row"><label>Inventory slots</label><input id="allstats-slots" type="number" min="1" max="6" value="6"></div>
+          <div class="input-row"><label>Lane</label><select id="allstats-lane" style="width:130px" onchange="allStatsLaneChanged()"><option value="top">Top</option><option value="jungle">Jungle</option><option value="mid">Mid</option><option value="bot" selected>Bot</option><option value="support">Support</option></select></div>
+          <div class="input-row"><label>Item passives</label><select id="allstats-peak"><option value="1">Enabled</option><option value="0">Base stats only</option></select></div>
+          <div class="optimizer-note">Bot: 7th boot slot · Mid: enhanced boots · Visible AH only</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Stat</div>
+          <select id="allstats-objective" style="display:none" onchange="allStatsObjectiveChanged()">
+            <option value="ad">Attack Damage</option><option value="ap">Ability Power</option><option value="ah_no_mandate">Visible Ability Haste — exclude Imperial Mandate</option><option value="ah_mandate">Visible Ability Haste + Imperial Mandate Control</option><option value="lethality">Lethality</option><option value="magic_pen_flat">Flat Magic Penetration</option><option value="ms">Movement Speed</option><option value="as">Attack Speed</option><option value="armor">Armor</option><option value="mr">Magic Resist</option><option value="hp">Health</option>
+          </select>
+          <div class="stat-objective-grid" id="allstats-objective-grid"></div>
+          <div class="passive-box" style="margin-top:12px"><div class="passive-name">Imperial Mandate</div><div class="passive-desc" id="allstats-mandate-status">Select a champion.</div></div>
+        </div>
+      </div>
+
+      <div class="card optimizer-card">
+        <div class="optimizer-head"><div><div class="optimizer-title">Stat Optimizer</div><div class="optimizer-subtitle" id="allstats-objective-description"></div></div></div>
+        <div class="optimizer-actions"><button class="action-btn primary" id="allstats-optimize-btn" type="button" onclick="optimizeAllStats()">Optimize</button><span class="optimizer-note" id="allstats-optimizer-status">Load Riot data to optimize.</span></div>
+        <div id="allstats-preview"></div>
+        <div id="allstats-results"></div>
+      </div>
+    </div><!-- /allstats -->
+
+  </main>
+</div>
+
+<script>
+'use strict';
+// =====================================================================
+// Riot Data Dragon item parser + champion-specific mathematical optimizer
+// =====================================================================
+const CALIBRATED_DDRAGON_VERSION = '16.14.1';
+const FALLBACK_DDRAGON_VERSION = CALIBRATED_DDRAGON_VERSION;
+const RIOT_VERSIONS_URL = 'https://ddragon.leagueoflegends.com/api/versions.json';
+const RIOT_REALM_URL = 'https://ddragon.leagueoflegends.com/realms/euw.json';
+const RIOT_CACHE_KEY = 'lol-build-calculator-riot-static-v4';
+const AUTO_UPDATE_INTERVAL_MS = 60 * 60 * 1000;
+const DATA = { version:FALLBACK_DDRAGON_VERSION, allItems:[], items:[], byId:new Map(), statItems:[], statById:new Map(), champions:{}, allStatsChampions:[], allStatsChampionById:new Map(), adGrowthFallback:{}, championDetails:new Map(), championCaps:new Map(), source:'', loaded:false, audit:{}, lastCheckedAt:0, liveVersion:'' };
+let autoUpdateTimer = null;
+const selectedItems = { jhin:new Set(), sett:new Set(), vlad:new Set() };
+const optimizerCache = { jhin:[], sett:[], vlad:[], allstats:[] };
+const JHIN_EMM = [4,5,6,7,8,9,10,11,12,14,16,20,24,28,32,36,40,44];
+const JHIN_REFERENCE = ['Yun Tal Wildarrows','Stormrazor',"Lord Dominik's Regards",'Infinity Edge','Bloodthirster','Muramana'];
+const jhinMaxCache = { noBoot:null, boot:null };
+
+const ALLSTATS_OBJECTIVES = [
+  ['ad','Attack Damage'],['ap','Ability Power'],['ah_no_mandate','Visible AH'],['ah_mandate','Visible AH + Mandate'],['lethality','Lethality'],['magic_pen_flat','Flat Magic Penetration'],['ms','Movement Speed'],['as','Attack Speed'],['armor','Armor'],['mr','Magic Resist'],['hp','Health']
+];
+const STAT_TRANSFORMED_FINAL_IDS = new Set(['2530','3040','3042','3168','3170','3171','3172','3173','3174','3175']);
+const MID_ENHANCED_BOOT_IDS = new Set(['3168','3170','3171','3172','3173','3174','3175']);
+const ALLSTATS_RESULT = { rows:[], objective:'ad', championId:'Jhin' };
+
+const MODELED_NAMES = new Set([
+  'Infinity Edge','Rapid Firecannon','The Collector','Hubris',"Lord Dominik's Regards",'Mortal Reminder','Terminus','Yun Tal Wildarrows','Muramana',
+  'Heartsteel',"Overlord's Bloodmail",'Sterak’s Gage',"Sterak's Gage","Warmog's Armor",
+  "Rabadon's Deathcap",'Riftmaker','Shadowflame',"Liandry's Torment",'Void Staff','Cryptbloom',
+  "Bloodletter's Curse",'Bloodletters Curse','Sorcerer’s Shoes',"Sorcerer's Shoes"
+]);
+
+function clamp(v, lo, hi){ return Math.max(lo,Math.min(hi,v)); }
+function round1(v){ return Math.round(v*10)/10; }
+function round0(v){ return Math.round(v); }
+function val(id, fallback=0){ const e=document.getElementById(id); const n=e?Number(e.value):NaN; return Number.isFinite(n)?n:fallback; }
+function riotGrowth(base,growth,lvl){ if(lvl<=1)return base; const n=lvl-1; return base+growth*n*(0.7025+0.0175*n); }
+function resistMultiplier(r){ return r>=0 ? 100/(100+r) : 2-100/(100-r); }
+function stripHtml(html){ const d=document.createElement('div'); d.innerHTML=String(html||'').replace(/<br\s*\/?>/gi,' ').replace(/<\/li\s*>/gi,' '); return (d.textContent||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); }
+function numMatch(text, regex, fallback=0){ const m=text.match(regex); return m?Number(m[1]):fallback; }
+function numericMatches(text,regex){
+  const out=[]; if(!text)return out; regex.lastIndex=0; let m;
+  while((m=regex.exec(text))!==null){ const n=Number(m[1]); if(Number.isFinite(n))out.push(n); if(m.index===regex.lastIndex)regex.lastIndex++; }
+  return out;
+}
+function visibleAbilityHasteFromDescription(descriptionHtml){
+  const html=String(descriptionHtml||'');
+  const parseFragment=fragment=>numericMatches(
+    stripHtml(fragment).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(),
+    /(\d+(?:\.\d+)?)\s*Ability Haste\b/gi
+  );
+  // Preferred source: Riot's explicit printed-stat block. This cannot see passives
+  // such as Basic/Ultimate haste because those appear after the block.
+  let values=[];
+  for(const match of html.matchAll(/<stats\b[^>]*>([\s\S]*?)<\/stats>/gi)) values.push(...parseFragment(match[1]));
+  if(values.length)return {value:Math.max(...values),source:'stats block'};
+  // Some Data Dragon/import paths omit or damage the custom <stats> wrapper while
+  // preserving the visible stat header. Parse only the text before the first passive
+  // separator; never scan the passive body for general sheet AH.
+  const separator=html.search(/<br\s*\/?>\s*<br\s*\/?>|<(?:passive|active|rules|li)\b/i);
+  const header=separator>=0?html.slice(0,separator):html;
+  values=parseFragment(header);
+  return values.length?{value:Math.max(...values),source:'description header'}:{value:0,source:''};
+}
+function fmt(n,d=0){ return Number(n).toLocaleString(undefined,{maximumFractionDigits:d,minimumFractionDigits:d}); }
+function chooseCount(n,k){ if(k<0||k>n)return 0; k=Math.min(k,n-k); let r=1; for(let i=1;i<=k;i++){r=r*(n-k+i)/i;if(r>1e9)return r;} return Math.round(r); }
+function itemIcon(item){ return `https://ddragon.leagueoflegends.com/cdn/${DATA.version}/img/item/${item.id}.png`; }
+function patchLabelFromVersion(v){ const p=v.split('.'); return p.length>=2?`26.${Number(p[1])}`:v; }
+function isBootItem(item){ return !!item&&(item.tags?.includes('Boots')||MID_ENHANCED_BOOT_IDS.has(String(item.id))); }
+function isStandardTier2Boot(item){ return isBootItem(item)&&!MID_ENHANCED_BOOT_IDS.has(String(item.id))&&String(item.id)!=='1001'&&Number(item.depth||0)===2&&item.purchasable&&item.inStore&&!!item.maps?.['11']; }
+
+function normalizeItem(id, raw){
+  const descriptionHtml=raw.description||'';
+  const plain=stripHtml(descriptionHtml);
+  // General visible Ability Haste is parsed separately from ability-specific
+  // passive haste. The parser prefers Riot's stats block and safely falls back to
+  // the pre-passive stat header when custom markup has been stripped or malformed.
+  const visibleAH=visibleAbilityHasteFromDescription(descriptionHtml);
+  const s=raw.stats||{};
+  const name=raw.name||`Item ${id}`;
+  const item={
+    id:String(id), name, descriptionHtml, passiveText:plain,
+    cost:Number(raw.gold?.total||0), sell:Number(raw.gold?.sell||0), purchasable:raw.gold?.purchasable!==false,
+    maps:raw.maps||{}, tags:raw.tags||[], into:raw.into||[], from:raw.from||[], requiredChampion:raw.requiredChampion||'', requiredAlly:raw.requiredAlly||'',
+    specialRecipe:raw.specialRecipe||0, depth:Number(raw.depth||0), inStore:raw.inStore!==false, consumed:!!raw.consumed, hideFromAll:!!raw.hideFromAll,
+    hp:Number(s.FlatHPPoolMod||0), ad:Number(s.FlatPhysicalDamageMod||0), ap:Number(s.FlatMagicDamageMod||0),
+    armor:Number(s.FlatArmorMod||0), mr:Number(s.FlatSpellBlockMod||0),
+    as:Number(s.PercentAttackSpeedMod||0)*100, crit:Number(s.FlatCritChanceMod||0)*100, mana:Number(s.FlatMPPoolMod||0),
+    msPct:Number(s.PercentMovementSpeedMod||0)*100, msFlat:Number(s.FlatMovementSpeedMod||0), hpPct:Number(s.PercentHPPoolMod||0)*100,
+    manaRegen:numMatch(plain,/(\d+(?:\.\d+)?)%\s+Base Mana Regen\b/i),
+    lifesteal:Number(s.PercentLifeStealMod||0)*100,
+    ah:visibleAH.value, ahSource:visibleAH.source,
+    basicAbilityHaste:numMatch(plain,/(\d+(?:\.\d+)?)\s+Basic Ability Haste\b/i),
+    ultimateAbilityHaste:numMatch(plain,/(\d+(?:\.\d+)?)\s+Ultimate (?:Ability )?Haste\b/i),
+    lethality:numMatch(plain,/(\d+(?:\.\d+)?)\s+Lethality\b/i),
+    armorPenPct:numMatch(plain,/(\d+(?:\.\d+)?)%\s+Armor Penetration\b/i),
+    magicPenPct:numMatch(plain,/(\d+(?:\.\d+)?)%\s+Magic Penetration\b/i),
+    magicPenFlat:numMatch(plain,/(\d+(?:\.\d+)?)\s+Magic Penetration\b/i),
+    critDamage:numMatch(plain,/(\d+(?:\.\d+)?)%\s+Critical Strike Damage\b/i),
+    modeled:MODELED_NAMES.has(name), fallbackFields:[], raw, rangedOnly:/for Ranged champions only/i.test(plain), meleeOnly:/for Melee champions only/i.test(plain)
+  };
+  item.yunCrit=name==='Yun Tal Wildarrows'?numMatch(plain,/up to\s+(\d+(?:\.\d+)?)%/i,25):0;
+  item.yunFlurry=name==='Yun Tal Wildarrows'?numMatch(plain,/gain\s+(\d+(?:\.\d+)?)% Attack Speed for/i,30):0;
+  item.muramanaAwe=name==='Muramana'?numMatch(plain,/(\d+(?:\.\d+)?)% max Mana as bonus Attack Damage/i,2):0;
+  item.sterakBaseAdPct=numMatch(plain,/Gain\s+(\d+(?:\.\d+)?)%\s+base Attack Damage as bonus Attack Damage/i);
+  item.heartsteelBase=numMatch(plain,/(?:deals|deal)\s+(\d+(?:\.\d+)?)\s+(?:plus|\+)\s*\d+(?:\.\d+)?% of your (?:max|maximum) Health/i);
+  item.heartsteelHpDamagePct=numMatch(plain,/(?:deals|deal)\s+\d+(?:\.\d+)?\s+(?:plus|\+)\s*(\d+(?:\.\d+)?)% of your (?:max|maximum) Health/i);
+  item.heartsteelGainPct=numMatch(plain,/grants?\s+(\d+(?:\.\d+)?)% of the damage as (?:max|maximum) Health/i);
+  item.overlordHpToAdPct=numMatch(plain,/Gain\s+(\d+(?:\.\d+)?)% of your bonus Health as Attack Damage/i);
+  item.overlordMaxAmp=numMatch(plain,/up to\s+(\d+(?:\.\d+)?)% increased Attack Damage/i);
+  item.warmogItemHpPct=numMatch(plain,/Increase your (?:bonus )?Health from items by\s+(\d+(?:\.\d+)?)%/i);
+  item.ldrMaxAmp=numMatch(plain,/up to\s+(\d+(?:\.\d+)?)% (?:bonus|increased) damage/i);
+  item.ldrBonusHpCap=numMatch(plain,/(\d+(?:\.\d+)?) more (?:bonus )?Health/i);
+  item.rabadonAmp=numMatch(plain,/total Ability Power by\s+(\d+(?:\.\d+)?)%/i);
+  item.riftHpToApPct=numMatch(plain,/Gain\s+(\d+(?:\.\d+)?)% of your bonus Health as Ability Power/i);
+  item.riftPerSec=numMatch(plain,/each second[^.]*?deal\s+(\d+(?:\.\d+)?)% bonus damage/i);
+  item.riftMaxAmp=numMatch(plain,/(?:maximum of|up to)\s+(\d+(?:\.\d+)?)%/i);
+  item.shadowThreshold=numMatch(plain,/below\s+(\d+(?:\.\d+)?)% Health/i);
+  item.shadowAmp=numMatch(plain,/deal(?:s|ing)?\s+(\d+(?:\.\d+)?)% increased damage/i);
+  item.liandryBurnPct=numMatch(plain,/\b(\d+(?:\.\d+)?)% (?:max|maximum) Health magic damage per second/i);
+  item.liandryBurnSeconds=numMatch(plain,/per second for\s+(\d+(?:\.\d+)?) seconds/i);
+  item.liandryMaxAmp=numMatch(plain,/up to\s+(\d+(?:\.\d+)?)%/i);
+  item.rfcDamage=numMatch(plain,/deals\s+(\d+(?:\.\d+)?) bonus magic damage/i);
+  item.collectorThreshold=numMatch(plain,/below\s+(\d+(?:\.\d+)?)% Health/i);
+  item.bloodletterReductionPct=numMatch(plain,/reduces their Magic Resist by\s+(\d+(?:\.\d+)?)%/i);
+  item.bloodletterMaxStacks=numMatch(plain,/Stacks\s+(\d+(?:\.\d+)?) times/i);
+  item.terminusOnHit=numMatch(plain,/Attacks deal\s+(\d+(?:\.\d+)?) bonus magic damage/i);
+  item.terminusPenPerDark=numMatch(plain,/Dark Attacks grant\s+(\d+(?:\.\d+)?)% Armor Penetration and Magic Penetration/i);
+  item.terminusMaxDarkStacks=0;
+  item.terminusMaxLightStacks=0;
+
+  item.mejaiApPerStack=name==="Mejai's Soulstealer"?numMatch(plain,/Gain\s+(\d+(?:\.\d+)?) Ability Power\s+per/i,5):0;
+  item.mejaiMaxStacks=name==="Mejai's Soulstealer"?numMatch(plain,/up to\s+(\d+(?:\.\d+)?)/i,25):0;
+  item.mejaiMsPct=name==="Mejai's Soulstealer"?numMatch(plain,/(\d+(?:\.\d+)?)% Move Speed\s+at/i,10):0;
+  item.seraphAwePct=name==="Seraph's Embrace"?numMatch(plain,/equal to\s+(\d+(?:\.\d+)?)% bonus Mana/i,1):0;
+  item.mandateControlAH=name==='Imperial Mandate'?numMatch(plain,/Gain\s+(\d+(?:\.\d+)?) Ability Haste for your abilities with/i,20):0;
+  item.roaStackAP=name==='Rod of Ages'?30:0;
+  item.roaStackHP=name==='Rod of Ages'?100:0;
+  item.roaStackMana=name==='Rod of Ages'?300:0;
+  item.dawncoreApPer100=name==='Dawncore'?numMatch(plain,/(\d+(?:\.\d+)?) Ability Power per 100% Base Mana Regen/i,10):0;
+  item.blackfireApPctPerTarget=name==='Blackfire Torch'?numMatch(plain,/gain\s+(\d+(?:\.\d+)?)% Ability Power/i,4):0;
+  item.blackfireMaxTargets=name==='Blackfire Torch'?5:0;
+  item.staffBuffAP=name==='Staff of Flowing Water'?numMatch(plain,/grants? you both[^.]*?(\d+(?:\.\d+)?) Ability Power/i,40):0;
+  item.staffBuffAH=name==='Staff of Flowing Water'?numMatch(plain,/and\s+(\d+(?:\.\d+)?) Ability Haste/i,15):0;
+  item.ardentBuffAS=name==='Ardent Censer'?numMatch(plain,/granting\s+(\d+(?:\.\d+)?)% Attack Speed/i,25):0;
+  item.hexplateBuffAS=name==='Experimental Hexplate'?30:0;
+  item.hexplateBuffMS=name==='Experimental Hexplate'?15:0;
+  item.shurelyaActiveMS=name==="Shurelya's Battlesong"?numMatch(plain,/Grant nearby allies\s+(\d+(?:\.\d+)?)% Move Speed/i,30):0;
+  item.forceNatureBonusMR=name==='Force of Nature'?numMatch(plain,/Gain\s+(\d+(?:\.\d+)?) Magic Resist/i,70):0;
+  item.forceNatureBonusMS=name==='Force of Nature'?numMatch(plain,/and\s+(\d+(?:\.\d+)?)% bonus Move Speed/i,6):0;
+  item.guinsooStackAS=name==="Guinsoo's Rageblade"?numMatch(plain,/grant\s+(\d+(?:\.\d+)?)% Attack Speed/i,8):0;
+  item.guinsooMaxStacks=name==="Guinsoo's Rageblade"?numMatch(plain,/stacking up to\s+(\d+(?:\.\d+)?)/i,4):0;
+  item.jakshoBonusResistPct=name==="Jak'Sho, The Protean"?numMatch(plain,/increase your bonus[^.]*?by\s+(\d+(?:\.\d+)?)%/i,30):0;
+  item.radiantMaxHpPct=name==='Radiant Virtue'?numMatch(plain,/increasing your Max Health by\s+(\d+(?:\.\d+)?)%/i,12.5):0;
+  item.swiftmarchAdaptivePct=name==='Swiftmarch'?numMatch(plain,/Gain\s+(\d+(?:\.\d+)?)% of your[^.]*Move Speed[^.]*as Adaptive Force/i,5):0;
+  item.peakAsPct=(name==='Yun Tal Wildarrows'?item.yunFlurry:0)+(name==="Guinsoo's Rageblade"?item.guinsooStackAS*item.guinsooMaxStacks:0);
+  item.peakMsFlat=0; item.peakMsPct=0; item.peakTotalMsPct=0;
+  item.youmuuOocMelee=0; item.youmuuOocRanged=0; item.youmuuActiveMelee=0; item.youmuuActiveRanged=0;
+  if(['Dead Man\'s Plate','Trailblazer','Trinity Force','Black Cleaver'].includes(name)) item.peakMsFlat=numMatch(plain,/(?:up to|grants?)\s+(\d+(?:\.\d+)?)\s+(?:bonus )?Move Speed/i,20);
+  if(name==="Mejai's Soulstealer") item.peakMsPct=item.mejaiMsPct;
+  if(name==='Protoplasm Harness') item.peakMsPct=numMatch(plain,/(\d+(?:\.\d+)?)% Move Speed/i,10);
+  if(name==="Shurelya's Battlesong") item.peakMsPct+=item.shurelyaActiveMS;
+  if(name==='Experimental Hexplate') item.peakMsPct+=item.hexplateBuffMS;
+  if(name==='Force of Nature') item.peakMsPct+=item.forceNatureBonusMS;
+  if(name==='Mercurial Scimitar') item.peakMsPct+=50;
+  if(name==='Stormrazor') item.peakMsPct+=45;
+  if(name==='Stridebreaker') item.peakMsPct+=35*5;
+  if(name==="Youmuu's Ghostblade"){ item.youmuuOocMelee=20; item.youmuuOocRanged=10; item.youmuuActiveMelee=20; item.youmuuActiveRanged=15; }
+  if(name==='Cosmic Drive') item.peakMsFlat+=60;
+  const adapt=(field,value)=>{ if(!item[field]){ item[field]=value; item.fallbackFields.push(field); } };
+  // Named last-resort safeguard; the generic visible-AH parser above handles
+  // Cosmic Drive and every other printed general-haste item first.
+  if(name==='Cosmic Drive') adapt('ah',25);
+  if(name==='Infinity Edge') adapt('critDamage',30);
+  if(name==='Void Staff') adapt('magicPenPct',40);
+  if(name==='Cryptbloom') adapt('magicPenPct',30);
+  if(name==="Sorcerer's Shoes"||name==='Sorcerer’s Shoes') adapt('magicPenFlat',19);
+  if(name==="Sterak's Gage"||name==='Sterak’s Gage') adapt('sterakBaseAdPct',45);
+  if(name==='Heartsteel'){ adapt('heartsteelBase',70); adapt('heartsteelHpDamagePct',6); adapt('heartsteelGainPct',10); }
+  if(name==="Overlord's Bloodmail"){ adapt('overlordHpToAdPct',2.5); adapt('overlordMaxAmp',12); }
+  if(name==="Warmog's Armor") adapt('warmogItemHpPct',12);
+  if(name==="Lord Dominik's Regards"){ adapt('ldrMaxAmp',15); adapt('ldrBonusHpCap',1500); }
+  if(name==='Terminus'){ item.armorPenPct=0; item.magicPenPct=0; adapt('terminusOnHit',30); adapt('terminusPenPerDark',10); adapt('terminusMaxDarkStacks',3); adapt('terminusMaxLightStacks',3); }
+  if(name==="Rabadon's Deathcap") adapt('rabadonAmp',30);
+  if(name==='Riftmaker'){ adapt('riftHpToApPct',2); adapt('riftPerSec',2); adapt('riftMaxAmp',8); }
+  if(name==='Shadowflame'){ adapt('shadowThreshold',40); adapt('shadowAmp',20); }
+  if(name==="Liandry's Torment"){ adapt('liandryBurnPct',2); adapt('liandryBurnSeconds',3); adapt('liandryMaxAmp',6); }
+  if(name==='Rapid Firecannon') adapt('rfcDamage',40);
+  if(name==="Seraph's Embrace") adapt('seraphAwePct',1);
+  if(name==='Imperial Mandate') adapt('mandateControlAH',20);
+  if(name==='Spear of Shojin') adapt('basicAbilityHaste',25);
+  if(name==='Malignance') adapt('ultimateAbilityHaste',20);
+  if(name==='Experimental Hexplate') adapt('ultimateAbilityHaste',30);
+  if(name==="Guinsoo's Rageblade"){ adapt('guinsooStackAS',8); adapt('guinsooMaxStacks',4); item.peakAsPct=item.guinsooStackAS*item.guinsooMaxStacks; }
+  if(name==="Jak'Sho, The Protean") adapt('jakshoBonusResistPct',30);
+  if(name==='Radiant Virtue') adapt('radiantMaxHpPct',12.5);
+  if(name==='The Collector') adapt('collectorThreshold',5);
+  if(name==="Bloodletter's Curse"||name==='Bloodletters Curse'){ adapt('bloodletterReductionPct',7.5); adapt('bloodletterMaxStacks',4); }
+  item.purchaseGroups=[];
+  if(isBootItem(item))item.purchaseGroups.push('boots');
+  if(["Lord Dominik's Regards",'Mortal Reminder',"Serylda's Grudge",'Terminus'].includes(name))item.purchaseGroups.push('fatality');
+  if(['Void Staff','Cryptbloom','Terminus',"Bloodletter's Curse",'Bloodletters Curse'].includes(name))item.purchaseGroups.push('blight');
+  if(["Sterak's Gage",'Sterak’s Gage','Maw of Malmortius','Immortal Shieldbow'].includes(name))item.purchaseGroups.push('lifeline');
+  if(['Muramana','Manamune',"Seraph's Embrace","Archangel's Staff",'Fimbulwinter',"Winter's Approach"].includes(name))item.purchaseGroups.push('tear');
+  if(['Ravenous Hydra','Profane Hydra','Titanic Hydra','Stridebreaker'].includes(name))item.purchaseGroups.push('hydra');
+  return item;
+}
+
+function canonicalItemName(name){return String(name).normalize('NFKD').replace(/[’`]/g,"'").replace(/[^a-z0-9]+/gi,' ').trim().toLowerCase();}
+function exclusionReason(item){
+  if(item.id==='3176'||canonicalItemName(item.name)==='forever forward')return 'removed obsolete boot';
+  if(!/^\d{4}$/.test(item.id))return 'non-canonical mode/variant ID';
+  if(!item.maps?.['11'])return 'not enabled on Summoner’s Rift';
+  if(item.id==='3042'&&item.name==='Muramana')return '';
+  if(item.name==='Manamune')return 'pre-transform Tear item';
+  if(!item.purchasable||!item.inStore||item.consumed||item.hideFromAll)return 'not a normal purchasable store item';
+  if(item.requiredChampion||item.requiredAlly||item.specialRecipe)return 'champion/ally/recipe-specific';
+  if(item.tags.some(t=>['Consumable','Trinket','Jungle'].includes(t)))return 'non-Legendary shop class';
+  if(item.cost<900)return 'component/starter cost';
+  if(item.into&&item.into.length&&!item.tags.includes('Boots'))return 'build component';
+  if(/^Guardian(?:'s)?\s/i.test(item.name))return 'ARAM Guardian item';
+  if(/Deprecated|Placeholder|Quest|Turret|Minion|Gangplank|Arena|Anvil/i.test(item.name))return 'mode/deprecated/special item';
+  return '';
+}
+function isSummonersRiftFinal(item){return !exclusionReason(item);}
+function dedupeCanonicalItems(items){
+  const byName=new Map(),removed=[];
+  for(const item of items){
+    const key=canonicalItemName(item.name),prev=byName.get(key);
+    if(!prev){byName.set(key,item);continue;}
+    const better=[item,prev].sort((a,b)=>(b.depth-a.depth)||(b.cost-a.cost)||(Number(a.id)-Number(b.id)))[0];
+    const drop=better===item?prev:item; byName.set(key,better); removed.push({id:drop.id,name:drop.name,keptId:better.id});
+  }
+  return {items:[...byName.values()],removed};
+}
+
+
+function isAllowedTransformedStatItem(item){
+  if(item.id==='3176'||canonicalItemName(item.name)==='forever forward')return false;
+  if(!STAT_TRANSFORMED_FINAL_IDS.has(item.id))return false;
+  if(!/^\d{4}$/.test(item.id)||!item.maps?.['11']||item.requiredChampion||item.requiredAlly)return false;
+  return !/^Guardian(?:'s)?\s/i.test(item.name);
+}
+
+async function fetchJson(url){ const r=await fetch(url,{cache:'no-store'}); if(!r.ok)throw new Error(`${r.status} ${r.statusText}`); return r.json(); }
+
+function cachedRiotData(){
+  try{
+    const c=JSON.parse(localStorage.getItem(RIOT_CACHE_KEY)||'null');
+    if(c?.itemJson?.data && c?.champJson?.data && c?.version)return c;
+  }catch(e){ console.warn('Riot cache read failed',e); }
+  return null;
+}
+function cacheRiotData(payload){
+  try{ localStorage.setItem(RIOT_CACHE_KEY,JSON.stringify(payload)); }
+  catch(e){ console.warn('Riot cache write failed',e); }
+}
+async function resolveLiveDdragonVersion(){
+  try{
+    const realm=await fetchJson(RIOT_REALM_URL);
+    const v=realm?.n?.item||realm?.v||realm?.dd;
+    if(v)return {version:String(v),source:'EUW realm'};
+  }catch(e){ console.warn('EUW realm lookup failed',e); }
+  const versions=await fetchJson(RIOT_VERSIONS_URL);
+  if(Array.isArray(versions)&&versions[0])return {version:String(versions[0]),source:'versions.json'};
+  throw new Error('Riot did not return a Data Dragon version');
+}
+function adapterAuditStatus(){
+  const el=document.getElementById('adapter-audit-line'); if(!el)return;
+  if(DATA.version===CALIBRATED_DDRAGON_VERSION){
+    el.textContent='';
+    el.style.color='var(--text-dim)';
+  }else{
+    el.textContent=`Adapters need review (${CALIBRATED_DDRAGON_VERSION} → ${DATA.version})`;
+    el.style.color='var(--gold)';
+  }
+}
+function updateAutoLine(prefix='Auto-update'){
+  const el=document.getElementById('auto-update-line'); if(!el)return;
+  const when=DATA.lastCheckedAt?new Date(DATA.lastCheckedAt).toLocaleString():'not checked yet';
+  el.textContent=`${prefix}: EUW realm on load + hourly while open · last checked ${when}.`;
+}
+async function loadRiotData(options={}){
+  const {silent=false,force=false}=options;
+  if(!silent)setDataStatus('warn','Checking…');
+  DATA.lastCheckedAt=Date.now(); updateAutoLine();
+  let resolved;
+  try{ resolved=await resolveLiveDdragonVersion(); }
+  catch(versionErr){
+    console.warn('Live version lookup failed',versionErr);
+    if(DATA.loaded){
+      setDataStatus('warn',`Offline · ${DATA.version}`);
+      updateAutoLine('Auto-update check failed'); return;
+    }
+    const cached=cachedRiotData();
+    if(cached){
+      applyRiotJson(cached.itemJson,cached.champJson,cached.version,cached.source||'browser cache',cached.adFallbackJson||null);
+      setDataStatus('warn',`Cached · ${cached.version}`);
+      updateAutoLine('Offline cache'); return;
+    }
+    setDataStatus('bad',`Data unavailable`);
+    renderLoadingItems('Could not reach Riot Data Dragon and no browser cache exists.');
+    return;
+  }
+  const version=resolved.version; DATA.liveVersion=version;
+  if(DATA.loaded && DATA.version===version && !force){
+    setDataStatus('ok',`Data ${version}`);
+    adapterAuditStatus(); updateAutoLine(); return;
+  }
+  const itemUrl=`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/item.json`;
+  const champUrl=`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`;
+  const adGrowthFallbackUrl='https://ddragon.leagueoflegends.com/cdn/16.4.1/data/en_US/champion.json';
+  try{
+    const [itemJson,champJson,adFallbackJson]=await Promise.all([fetchJson(itemUrl),fetchJson(champUrl),fetchJson(adGrowthFallbackUrl).catch(()=>null)]);
+    applyRiotJson(itemJson,champJson,version,itemUrl,adFallbackJson);
+    cacheRiotData({version,itemJson,champJson,adFallbackJson,source:itemUrl,savedAt:Date.now()});
+    setDataStatus('ok',`Updated · ${version}`);
+    adapterAuditStatus(); updateAutoLine();
+  }catch(err){
+    console.error(err);
+    if(DATA.loaded){
+      setDataStatus('warn',`Refresh failed · ${DATA.version}`);
+      updateAutoLine('Refresh failed'); return;
+    }
+    const cached=cachedRiotData();
+    if(cached){
+      applyRiotJson(cached.itemJson,cached.champJson,cached.version,cached.source||'browser cache',cached.adFallbackJson||null);
+      setDataStatus('warn',`Cached · ${cached.version}`);
+      adapterAuditStatus(); updateAutoLine('Offline cache');
+    }else{
+      setDataStatus('bad',`Data fetch blocked`);
+      document.getElementById('source-url').innerHTML=`Official source: <a href="${itemUrl}" target="_blank" rel="noopener">${itemUrl}</a>`;
+      renderLoadingItems('Could not load item.json. Open this file through a local web server, or import the official JSON manually.');
+    }
+  }
+}
+function startAutoUpdates(){
+  if(autoUpdateTimer)clearInterval(autoUpdateTimer);
+  autoUpdateTimer=setInterval(()=>loadRiotData({silent:true}),AUTO_UPDATE_INTERVAL_MS);
+  window.addEventListener('focus',()=>{ if(Date.now()-DATA.lastCheckedAt>15*60*1000)loadRiotData({silent:true}); });
+}
+
+function applyRiotJson(itemJson,champJson,version,source,adFallbackJson=null){
+  DATA.version=version||FALLBACK_DDRAGON_VERSION;
+  DATA.source=source||'Locally imported Riot item.json';
+  DATA.allItems=Object.entries(itemJson.data||{}).map(([id,r])=>normalizeItem(id,r));
+  const excluded=DATA.allItems.map(i=>({item:i,reason:exclusionReason(i)})).filter(x=>x.reason);
+  const canonical=DATA.allItems.filter(isSummonersRiftFinal);
+  const deduped=dedupeCanonicalItems(canonical);
+  DATA.items=deduped.items;
+  DATA.byId=new Map(DATA.items.map(i=>[i.id,i]));
+  const statCandidates=DATA.allItems.filter(i=>isSummonersRiftFinal(i)||isAllowedTransformedStatItem(i));
+  const statDeduped=dedupeCanonicalItems(statCandidates);
+  DATA.statItems=statDeduped.items; DATA.statById=new Map(DATA.statItems.map(i=>[i.id,i]));
+  if(!selectedItems.jhin.size){ for(const name of JHIN_REFERENCE){ const item=DATA.items.find(i=>i.name===name); if(item)selectedItems.jhin.add(item.id); } }
+  jhinMaxCache.noBoot=null;jhinMaxCache.boot=null;
+  if(champJson?.data) DATA.champions=champJson.data;
+  if(adFallbackJson?.data) DATA.adGrowthFallback=adFallbackJson.data;
+  DATA.audit={
+    totalRecords:DATA.allItems.length, eligibleBeforeDedup:canonical.length, eligibleFinal:DATA.items.length,
+    excludedCount:excluded.length, duplicateCount:deduped.removed.length,
+    excludedByReason:Object.fromEntries([...new Set(excluded.map(x=>x.reason))].map(r=>[r,excluded.filter(x=>x.reason===r).length])),
+    duplicateRecords:deduped.removed,
+    visibleAbilityHasteItems:DATA.statItems.filter(i=>i.ah>0).map(i=>({id:i.id,name:i.name,ah:i.ah,source:i.ahSource||'adapter'})),
+    abilityHasteTaggedButUnparsed:DATA.statItems.filter(i=>i.tags.includes('AbilityHaste')&&i.ah<=0).map(i=>({id:i.id,name:i.name,basic:i.basicAbilityHaste||0,ultimate:i.ultimateAbilityHaste||0}))
+  };
+  DATA.loaded=DATA.items.length>0;
+  document.getElementById('patch-badge').textContent=`Patch ${patchLabelFromVersion(DATA.version)} · Data Dragon ${DATA.version}`;
+  adapterAuditStatus();
+  document.getElementById('source-url').innerHTML=`Official source: <a href="${DATA.source}" target="_blank" rel="noopener">${DATA.source}</a>`;
+  document.getElementById('export-normalized').disabled=false;
+  setDataStatus('ok',`Data ${DATA.version}`);
+  ['jhin','sett','vlad'].forEach(c=>{ renderItemToggles(c); document.getElementById(`${c}-optimizer-status`).textContent='Ready.'; });
+  populateAllStatsChampions(); document.getElementById('allstats-optimizer-status').textContent='Ready.';
+  calcJhin();calcSett();calcVlad();renderAllStatsPreview();
+}
+function setDataStatus(kind,text){ document.getElementById('status-dot').className=`status-dot ${kind}`; document.getElementById('data-status').textContent=text; }
+function renderLoadingItems(msg){ ['jhin','sett','vlad'].forEach(c=>document.getElementById(`${c}-items`).innerHTML=`<div class="loading-line">${msg}</div>`); }
+
+function championRelevance(champ,item,objective=''){
+  if(champ==='jhin') return !item.tags.includes('Boots')&&(item.ad>0||item.crit>0||item.as>0||item.mana>0||item.hp>0||item.yunCrit>0||item.muramanaAwe>0||item.sterakBaseAdPct>0||item.overlordHpToAdPct>0||item.warmogItemHpPct>0);
+  if(champ==='sett') {
+    if(objective==='ehp') return item.hp>0||item.armor>0||item.ad>0||['Heartsteel',"Overlord's Bloodmail"].includes(item.name);
+    return item.hp>0||item.ad>0||['Heartsteel',"Overlord's Bloodmail",'Titanic Hydra',"Sterak's Gage",'Sterak’s Gage'].includes(item.name);
+  }
+  return item.ap>0||item.hp>0||item.ah>0||item.magicPenFlat>0||item.magicPenPct>0||['Riftmaker',"Rabadon's Deathcap",'Shadowflame',"Liandry's Torment","Bloodletter's Curse",'Bloodletters Curse'].includes(item.name);
+}
+function relevanceScore(champ,item){
+  if(champ==='jhin')return jhinStaticContribution(item);
+  if(champ==='sett')return item.hp*.12+item.ad*2.1+item.armor*.25+item.mr*.2+(item.modeled?30:0);
+  return item.ap*1.7+item.hp*.12+item.ah*.55+item.magicPenFlat*2.2+item.magicPenPct*1.8+(item.modeled?30:0);
+}
+function itemStatsLine(i){
+  const x=[]; if(i.ad)x.push(`${round1(i.ad)} AD`);if(i.ap)x.push(`${round1(i.ap)} AP`);if(i.hp)x.push(`${round0(i.hp)} HP`);if(i.armor)x.push(`${round0(i.armor)} Armor`);if(i.mr)x.push(`${round0(i.mr)} MR`);if(i.as)x.push(`${round1(i.as)}% AS`);if(i.crit)x.push(`${round1(i.crit)}% Crit`);if(i.mana)x.push(`${round0(i.mana)} Mana`);if(i.ah)x.push(`${round1(i.ah)} AH`);if(i.lethality)x.push(`${round1(i.lethality)} Leth`);if(i.armorPenPct)x.push(`${round1(i.armorPenPct)}% ArPen`);if(i.magicPenFlat)x.push(`${round1(i.magicPenFlat)} MPen`);if(i.magicPenPct)x.push(`${round1(i.magicPenPct)}% MPen`);if(i.yunCrit)x.push(`${round0(i.yunCrit)}% trained Crit`);if(i.yunFlurry)x.push(`+${round0(i.yunFlurry)}% Flurry AS`);if(i.muramanaAwe)x.push(`${round1(i.muramanaAwe)}% max Mana → AD`);if(i.sterakBaseAdPct)x.push(`${round1(i.sterakBaseAdPct)}% base AD → AD`);if(i.overlordHpToAdPct)x.push(`${round1(i.overlordHpToAdPct)}% bonus HP → AD`); return x.join(' · ')||'Utility/passive item';
+}
+function itemCategory(champ,i){
+  if(i.tags.includes('Boots'))return 'Boots';
+  if(champ==='jhin'){
+    if(JHIN_REFERENCE.includes(i.name))return 'Reference build';
+    if(i.sterakBaseAdPct||i.overlordHpToAdPct||i.warmogItemHpPct)return 'Sheet-AD passive adapters';
+    if(i.name==='Muramana'||i.mana>0)return 'Mana scaling';
+    if(i.hp>0&&!i.ad&&!i.as&&!i.crit&&!i.mana)return 'Bloodmail HP conversion';
+    if(i.ad>0&&jhinItemCrit(i)>0&&i.as>0)return 'AD + crit + attack speed';
+    if(i.ad>0&&jhinItemCrit(i)>0)return 'AD + crit';
+    if(i.ad>0&&i.as>0)return 'AD + attack speed';
+    if(i.ad>0)return 'Flat attack damage';
+    if(jhinItemCrit(i)>0&&i.as>0)return 'Crit + attack speed';
+    if(i.as>0)return 'Attack speed conversion';
+    return 'Other';
+  }
+  if(champ==='sett'){
+    if(['Heartsteel',"Overlord's Bloodmail","Sterak's Gage",'Sterak’s Gage',"Warmog's Armor",'Titanic Hydra'].includes(i.name))return 'HP / AD synergy';
+    if(i.hp>0&&(i.armor>0||i.mr>0))return 'Tank defenses';
+    if(i.hp>0&&i.ad>0)return 'Fighter damage';
+    if(i.hp>0)return 'Health';
+    if(i.ad>0)return 'Damage';
+    return 'Utility';
+  }
+  if(i.magicPenFlat>0||i.magicPenPct>0||i.purchaseGroups.includes('blight'))return 'Magic penetration';
+  if(i.ap>0&&i.hp>0)return 'AP + health';
+  if(i.ap>0)return 'Ability power';
+  if(i.hp>0||i.armor>0||i.mr>0)return 'Defense';
+  if(i.ah>0)return 'Ability haste';
+  return 'Utility';
+}
+function objectivePassiveRisk(champ,i){
+  if(i.modeled)return false;
+  const t=i.passiveText;
+  const damage=/(?:Basic )?Attacks?(?:[^.]{0,45})?(?:deal|deals|apply|applies|grant|grants)|Every (?:third|fourth|fifth|\d+(?:st|nd|rd|th)?) Attack|bonus (?:physical|magic|true) damage|On-Hit|Energized|Spellblade|increased damage|amplif(?:y|ies|ication)|reduces? (?:their )?(?:Armor|Magic Resist)|shred|Critical Strikes? deal|execute|detonat|burn|chain lightning|Cleave|Colossus|Skipper|Focus Fire|Headshot|Kill Streak/i;
+  const scaling=champ==='sett'?/Cleave|Colossus|Skipper|Dragonforce|Focus Fire|Heavy Hitter/i:champ==='vlad'?/Cinderbloom|Stormraider|Soulflame|Hypershot|Malignance/i:/Headshot|Momentum.*damage|Kill Streak/i;
+  return damage.test(t)||scaling.test(t);
+}
+function itemBadge(champ,i){
+  if(i.modeled)return '<span class="item-model-badge">MODELED</span>';
+  if(objectivePassiveRisk(champ,i))return '<span class="item-risk-badge">UNMODELED DMG</span>';
+  return '<span class="item-stats-badge">STATS ONLY</span>';
+}
+function itemCard(champ,i){return `<div class="item-toggle ${selectedItems[champ].has(i.id)?'checked':''}" onclick="toggleItem('${champ}','${i.id}')" title="${escapeAttr(i.passiveText)}">
+    <div class="item-check">${selectedItems[champ].has(i.id)?'✓':''}</div><img src="${itemIcon(i)}" alt=""><div class="item-info"><div class="item-name">${escapeHtml(i.name)} ${itemBadge(champ,i)} ${i.fallbackFields.length?'<span class="item-fallback-badge" title="Riot JSON omitted: '+escapeAttr(i.fallbackFields.join(', '))+'">ADAPTER</span>':''}</div><span class="item-id">#${i.id} · ${escapeHtml(itemCategory(champ,i))}</span><div class="item-stats-line">${itemStatsLine(i)}</div><div class="item-passive">${escapeHtml(i.passiveText.slice(0,170))}${i.passiveText.length>170?'…':''}</div></div><span class="item-cost">${i.cost}g</span></div>`;}
+function renderItemToggles(champ){
+  const box=document.getElementById(`${champ}-items`); if(!DATA.loaded){box.innerHTML='<div class="loading-line">Loading official Riot items…</div>';return;}
+  const q=(document.getElementById(`${champ}-item-search`)?.value||'').trim().toLowerCase();
+  const sort=document.getElementById(`${champ}-item-sort`)?.value||'category';
+  let items=DATA.items.filter(i=>championRelevance(champ,i)&&(!q||i.name.toLowerCase().includes(q)||i.passiveText.toLowerCase().includes(q)||i.id.includes(q)));
+  if(sort==='category'){
+    const groups=new Map();
+    for(const i of items){const cat=itemCategory(champ,i);if(!groups.has(cat))groups.set(cat,[]);groups.get(cat).push(i);}
+    const order=champ==='jhin'?['Reference build','Sheet-AD passive adapters','AD + crit + attack speed','AD + crit','AD + attack speed','Flat attack damage','Crit + attack speed','Attack speed conversion','Mana scaling','Bloodmail HP conversion','Other']:champ==='sett'?['HP / AD synergy','Fighter damage','Tank defenses','Health','Damage','Boots','Utility']:['Ability power','AP + health','Magic penetration','Ability haste','Defense','Boots','Utility'];
+    box.innerHTML=order.filter(cat=>groups.has(cat)).map(cat=>{const list=groups.get(cat).sort((a,b)=>Number(objectivePassiveRisk(champ,a))-Number(objectivePassiveRisk(champ,b))||Number(b.modeled)-Number(a.modeled)||relevanceScore(champ,b)-relevanceScore(champ,a)||a.name.localeCompare(b.name));return `<div class="item-group"><div class="item-group-title">${cat}<span>${list.length}</span></div>${list.map(i=>itemCard(champ,i)).join('')}</div>`;}).join('')||'<div class="loading-line">No matching relevant items.</div>';
+    return;
+  }
+  items.sort((a,b)=>sort==='name'?a.name.localeCompare(b.name):sort==='cost'?a.cost-b.cost:relevanceScore(champ,b)-relevanceScore(champ,a));
+  box.innerHTML=items.map(i=>itemCard(champ,i)).join('')||'<div class="loading-line">No matching relevant items.</div>';
+}
+function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function escapeAttr(s){return escapeHtml(s).replace(/\n/g,' ');}
+function toggleItem(champ,id){
+  if(selectedItems[champ].has(id))selectedItems[champ].delete(id);
+  else {
+    if(selectedItems[champ].size>=6)return;
+    const item=DATA.byId.get(id);if(!item)return;
+    if(champ==='jhin'){
+      const trial=[...selectedBuild('jhin'),item];
+      if(jhinEffectiveCrit(trial)>100+1e-9){document.getElementById('jhin-optimizer-status').textContent='Selection blocked: effective crit cannot exceed 100%.';return;}
+    }
+    selectedItems[champ].add(id);
+  }
+  renderItemToggles(champ);calcChampion(champ);
+}
+function calcChampion(c){if(c==='jhin')calcJhin();else if(c==='sett')calcSett();else calcVlad();}
+function selectedBuild(c){return [...selectedItems[c]].map(id=>DATA.byId.get(id)).filter(Boolean);}
+function sumStats(build){ const out={hp:0,hpPct:0,ad:0,ap:0,armor:0,mr:0,as:0,crit:0,mana:0,ah:0,msFlat:0,msPct:0,lethality:0,armorPenPct:0,magicPenFlat:0,magicPenPct:0,critDamage:0,cost:0}; for(const i of build)for(const k of Object.keys(out))out[k]+=Number(i[k]||0); return out; }
+function has(build,name){return build.some(i=>i.name===name);}
+function hasAny(build,names){return build.some(i=>names.includes(i.name));}
+function findItem(build,names){const list=Array.isArray(names)?names:[names];return build.find(i=>list.includes(i.name))||null;}
+function championStat(name,key,fallback){const v=Number(DATA.champions?.[name]?.stats?.[key]);return Number.isFinite(v)&&v!==0?v:fallback;}
+
+function jhinItemCrit(item){return item.name==='Yun Tal Wildarrows'?Math.max(item.crit||0,item.yunCrit||25):Number(item.crit||0);}
+function jhinEffectiveCrit(build){return build.reduce((n,i)=>n+jhinItemCrit(i),0);}
+function jhinQuestBoot(){return DATA.allItems.find(i=>i.id==='3006'&&i.name==="Berserker's Greaves")||DATA.allItems.find(i=>i.id==='3006')||null;}
+function jhinState(build,overrides={}){
+  const lvl=clamp(Math.round(overrides.level??val('jhin-level',18)),1,18),questBoot=overrides.questBoot??!!val('jhin-quest-boot',0),st=sumStats(build);
+  const baseAD=riotGrowth(championStat('Jhin','attackdamage',61),championStat('Jhin','attackdamageperlevel',4.4),lvl);
+  const baseMana=riotGrowth(championStat('Jhin','mp',300),championStat('Jhin','mpperlevel',50),lvl),totalMana=baseMana+st.mana;
+  const yun=findItem(build,'Yun Tal Wildarrows'),muramana=findItem(build,'Muramana'),sterak=findItem(build,["Sterak's Gage",'Sterak’s Gage']),bloodmail=findItem(build,"Overlord's Bloodmail"),warmog=findItem(build,"Warmog's Armor"),boot=jhinQuestBoot();
+  const bootAS=questBoot?Number(boot?.as||25):0,yunFlurry=yun?Number(yun.yunFlurry||30):0;
+  const warmogBonusHP=warmog?(warmog.warmogItemHpPct/100)*st.hp:0,bonusHP=st.hp+warmogBonusHP;
+  const muramanaAD=muramana?(muramana.muramanaAwe/100)*totalMana:0,sterakAD=sterak?(sterak.sterakBaseAdPct/100)*baseAD:0,bloodmailAD=bloodmail?(bloodmail.overlordHpToAdPct/100)*bonusHP:0;
+  const prePassiveAD=baseAD+st.ad+muramanaAD+sterakAD+bloodmailAD;
+  const rawCrit=jhinEffectiveCrit(build),effectiveCrit=Math.min(100,rawCrit),bonusAS=st.as+yunFlurry+bootAS;
+  const passivePct=(JHIN_EMM[lvl-1]+.35*effectiveCrit+.3*bonusAS)/100,passiveAD=prePassiveAD*passivePct,totalAD=prePassiveAD+passiveAD;
+  return {lvl,st,baseAD,baseMana,totalMana,yunFlurry,muramanaAD,sterakAD,bloodmailAD,warmogBonusHP,bonusHP,bootAS,questBoot,rawCrit,effectiveCrit,bonusAS,prePassiveAD,passivePct,passiveAD,totalAD,cost:st.cost+(questBoot?Number(boot?.cost||1100):0),validCrit:rawCrit<=100+1e-9};
+}
+function jhinScore(build,obj){return jhinState(build).totalAD;}
+function jhinStaticContribution(item){if(!DATA.loaded)return 0;return jhinState([item],{questBoot:false}).totalAD-jhinState([],{questBoot:false}).totalAD;}
+
+function settState(build){
+  const lvl=clamp(val('sett-level',18),1,18),qrank=clamp(val('sett-qrank',5),1,5),wrank=clamp(val('sett-wrank',5),1,5),erank=clamp(val('sett-erank',5),1,5),rrank=clamp(val('sett-rrank',3),1,3);
+  const st=sumStats(build),baseAD=riotGrowth(championStat('Sett','attackdamage',60),championStat('Sett','attackdamageperlevel',3.75),lvl),baseHP=riotGrowth(championStat('Sett','hp',670),championStat('Sett','hpperlevel',114),lvl);
+  const heartsteelItem=findItem(build,'Heartsteel'),overlordItem=findItem(build,"Overlord's Bloodmail"),sterakItem=findItem(build,["Sterak's Gage",'Sterak’s Gage']),warmogItem=findItem(build,"Warmog's Armor");
+  const heartBonus=heartsteelItem?Math.max(0,val('sett-heartsteel-stacks',0)):0;
+  const warmogSourceHP=st.hp+heartBonus,warmogBonus=warmogItem?(warmogItem.warmogItemHpPct/100)*warmogSourceHP:0;
+  const externalBonusHP=st.hp+heartBonus+warmogBonus,totalHP=baseHP+externalBonusHP;
+  const tyranny=overlordItem?(overlordItem.overlordHpToAdPct/100)*externalBonusHP:0;
+  const sterakAD=sterakItem?(sterakItem.sterakBaseAdPct/100)*baseAD:0;
+  const preAmpAD=baseAD+st.ad+tyranny+sterakAD;
+  const missing=clamp(val('sett-missing-hp',50),0,100)/100,mode=document.getElementById('sett-overlord-mode')?.value||'auto';
+  let retr=0;if(overlordItem){const maxAmp=overlordItem.overlordMaxAmp/100;retr=mode==='12'?maxAmp:mode==='0'?0:maxAmp*clamp(missing/.7,0,1);}
+  const totalAD=preAmpAD*(1+retr),bonusAD=Math.max(0,totalAD-baseAD),gritCap=.5*totalHP;
+  const currentGrit=Math.min(Math.max(0,val('sett-grit',0)),gritCap);
+  const wBase=[80,100,120,140,160][wrank-1],wRatio=.25+.0025*bonusAD,w=wBase+wRatio*currentGrit,wMax=wBase+wRatio*gritCap;
+  const targetArmor=val('sett-target-armor',100),phys=resistMultiplier(targetArmor),targetHP=Math.max(1,val('sett-target-hp',3000));
+  const rightBase=5+(85/17)*(lvl-1),rightBonus=rightBase+.55*bonusAD,rightPunch=(totalAD+rightBonus)*phys;
+  const twoPunch=(2*totalAD+rightBonus)*phys;
+  const qBase=[10,20,30,40,50][qrank-1],qPer100=[.01,.015,.02,.025,.03][qrank-1];
+  const qPct=.01+qPer100*(totalAD/100),qHit=(totalAD+qBase+qPct*targetHP)*phys;
+  const eBase=[50,70,90,110,130][erank-1],e=(eBase+.6*totalAD)*phys;
+  const rBase=[200,300,400][rrank-1],r=(rBase+1.2*bonusAD+[.4,.5,.6][rrank-1]*val('sett-target-bonushp',2000))*phys;
+  const heartsteel=heartsteelItem?(heartsteelItem.heartsteelBase+(heartsteelItem.heartsteelHpDamagePct/100)*totalHP)*phys:0;
+  const armor=riotGrowth(championStat('Sett','armor',33),championStat('Sett','armorperlevel',4.7),lvl)+st.armor,ehp=totalHP*(1+Math.max(0,armor)/100);
+  return {lvl,st,baseAD,baseHP,heartBonus,warmogBonus,externalBonusHP,totalHP,tyranny,sterakAD,retr,totalAD,bonusAD,gritCap,currentGrit,wRatio,w,wMax,rightPunch,twoPunch,qHit,e,r,heartsteel,armor,ehp,cost:st.cost};
+}
+function settScore(build,obj){const s=settState(build);return obj==='heartsteel'?s.heartsteel:obj==='rightPunch'?s.rightPunch:obj==='twoPunch'?s.twoPunch:obj==='ehp'?s.ehp:s.wMax;}
+
+function vladState(build){
+  const lvl=clamp(val('vlad-level',18),1,18),qrank=clamp(val('vlad-qrank',5),1,5),erank=clamp(val('vlad-erank',5),1,5),rrank=clamp(val('vlad-rrank',3),1,3),st=sumStats(build),baseHP=riotGrowth(championStat('Vladimir','hp',600),championStat('Vladimir','hpperlevel',110),lvl);
+  const deathcapItem=findItem(build,"Rabadon's Deathcap"),rad=deathcapItem?1+deathcapItem.rabadonAmp/100:1;
+  // Crimson Pact does not self-stack. Riftmaker's HP->AP is an item conversion, solved with its AP->HP feedback.
+  const riftItem=findItem(build,'Riftmaker'),rift=!!riftItem;
+  let riftAP=0,preRadAP=st.ap,totalAP=0,passiveHP=0;
+  for(let n=0;n<30;n++){
+    preRadAP=st.ap+st.hp*.033+riftAP; totalAP=preRadAP*rad;
+    passiveHP=1.6*(st.ap+riftAP)*rad;
+    const bonusHP=st.hp+passiveHP;
+    const next=rift?(riftItem.riftHpToApPct/100)*bonusHP:0;
+    if(Math.abs(next-riftAP)<1e-8){riftAP=next;break;} riftAP=next;
+  }
+  preRadAP=st.ap+st.hp*.033+riftAP;totalAP=preRadAP*rad;passiveHP=1.6*(st.ap+riftAP)*rad;
+  const totalHP=baseHP+st.hp+passiveHP;
+  const targetMR=val('vlad-target-mr',100),bloodletterItem=findItem(build,["Bloodletter's Curse",'Bloodletters Curse']);
+  const bloodStacks=bloodletterItem?clamp(val('vlad-bloodletter-stacks',bloodletterItem.bloodletterMaxStacks),0,bloodletterItem.bloodletterMaxStacks):0;
+  const reducedMR=targetMR*(1-(bloodletterItem?bloodletterItem.bloodletterReductionPct/100:0)*bloodStacks),effectiveMR=reducedMR*(1-st.magicPenPct/100)-st.magicPenFlat,magic=resistMultiplier(effectiveMR);
+  const currentPct=clamp(val('vlad-target-current',50),0,100)/100,targetHP=Math.max(1,val('vlad-target-hp',3000)),seconds=Math.max(0,val('vlad-combat-seconds',4));
+  const qBase=[80,100,120,140,160][qrank-1],qRaw=qBase+.6*totalAP,empQRaw=qRaw*1.85;
+  const eRaw=[60,90,120,150,180][erank-1]+.06*totalHP+.80*totalAP;
+  const rRaw=[150,250,350][rrank-1]+.7*totalAP;
+  const liandryItem=findItem(build,"Liandry's Torment"),shadowItem=findItem(build,'Shadowflame');
+  const riftAmp=rift?1+(riftItem.riftMaxAmp/100)*clamp(seconds/4,0,1):1;
+  const liandryAmp=liandryItem?1+(liandryItem.liandryMaxAmp/100)*clamp(seconds/3,0,1):1;
+  const shadow=shadowItem&&currentPct<(shadowItem.shadowThreshold/100)?1+shadowItem.shadowAmp/100:1;
+  const amp=riftAmp*liandryAmp*shadow,burnRaw=liandryItem?(liandryItem.liandryBurnPct/100)*targetHP*Math.min(liandryItem.liandryBurnSeconds,Math.max(0,seconds)):0;
+  const empowered=!!val('vlad-crimsonrush',0),selectedQRaw=empowered?empQRaw:qRaw;
+  const q=qRaw*amp*magic,empQ=empQRaw*amp*magic,selectedQ=selectedQRaw*amp*magic,e=eRaw*amp*magic,r=rRaw*1.10*amp*magic,combo=((selectedQRaw+eRaw+rRaw)*amp+burnRaw)*1.10*magic;
+  const hasteMult=1+st.ah/100,throughput=((qRaw/4.6)+(eRaw/5))*10*hasteMult*amp*magic+burnRaw*magic;
+  return {lvl,st,baseHP,rad,riftAP,totalAP,passiveHP,totalHP,reducedMR,effectiveMR,magic,qRaw,empQRaw,eRaw,rRaw,q,empQ,selectedQ,e,r,combo,throughput,amp,burn:burnRaw*magic,cost:st.cost};
+}
+function vladScore(build,obj){const s=vladState(build);return obj==='q'?s.q:obj==='empQ'?s.empQ:obj==='e'?s.e:obj==='hp'?s.totalHP:obj==='sustained'?s.throughput:s.combo;}
+
+function renderStatGrid(id,stats){document.getElementById(id).innerHTML=stats.map(s=>`<div class="stat-block ${s.hl||''}"><div class="stat-label">${s.label}</div><div class="stat-value">${s.value}</div>${s.sub?`<div class="stat-sub">${s.sub}</div>`:''}</div>`).join('');}
+function renderAbilityTable(id,rows){document.getElementById(id).innerHTML=rows.map(r=>`<tr><td class="ability-name">${r.name}</td><td class="dmg-value">${r.dmg}</td><td class="dmg-note">${r.note||''}</td></tr>`).join('');}
+
+function calcJhin(){
+  if(!DATA.loaded)return;const build=selectedBuild('jhin'),s=jhinState(build);
+  document.getElementById('jhin-formula-trace').innerHTML=`<span class="val">Base AD:</span> ${fmt(s.baseAD,1)}
+<span class="val">Flat item AD:</span> ${fmt(s.st.ad,1)}
+<span class="val">Muramana Awe:</span> ${fmt(s.muramanaAD,1)} (${fmt(s.totalMana,0)} max mana × ${fmt(findItem(build,'Muramana')?.muramanaAwe||0,1)}%)
+<span class="val">Sterak conversion:</span> ${fmt(s.sterakAD,1)}
+<span class="val">Bloodmail conversion:</span> ${fmt(s.bloodmailAD,1)} (${fmt(s.bonusHP,0)} bonus HP)
+<span class="val">Warmog item-HP bonus:</span> ${fmt(s.warmogBonusHP,1)}
+<span class="val">Pre-passive AD:</span> ${fmt(s.prePassiveAD,1)}
+<span class="val">Effective crit:</span> ${fmt(s.effectiveCrit,1)}%${s.rawCrit>100?` <strong>(INVALID: ${fmt(s.rawCrit,1)}%)</strong>`:''}
+<span class="val">Bonus attack speed:</span> ${fmt(s.bonusAS,1)}%${s.yunFlurry?` (includes ${fmt(s.yunFlurry,0)}% Yun Tal Flurry)`:''}${s.bootAS?` + quest boots`:''}
+<span class="val">Whisper rate:</span> ${JHIN_EMM[s.lvl-1]}% + 0.35×${fmt(s.effectiveCrit,1)} + 0.30×${fmt(s.bonusAS,1)} = ${fmt(s.passivePct*100,1)}%
+<span class="result">Passive bonus AD:</span> ${fmt(s.passiveAD,1)}
+<span class="result">Total AD:</span> ${fmt(s.totalAD,1)}`;
+  renderStatGrid('jhin-stat-grid',[{label:'Bonus AD from Whisper',value:fmt(s.passiveAD,1),sub:`${fmt(s.passivePct*100,1)}% of ${fmt(s.prePassiveAD,1)} pre-passive AD`,hl:'highlight-blue'},{label:'Total Attack Damage',value:fmt(s.totalAD,1),sub:`${build.length}/6 items${s.questBoot?' + quest boots':''} · ${fmt(s.effectiveCrit,0)}% crit`,hl:'highlight-gold'}]);
+}
+function calcSett(){
+  if(!DATA.loaded)return;const s=settState(selectedBuild('sett'));
+  document.getElementById('sett-formula-trace').innerHTML=`<span class="val">Base HP:</span> ${fmt(s.baseHP,1)}
+<span class="val">Heartsteel permanent HP:</span> ${fmt(s.heartBonus,1)}
+<span class="val">Warmog item-health bonus:</span> ${fmt(s.warmogBonus,1)}
+<span class="val">External bonus HP:</span> ${fmt(s.externalBonusHP,1)}
+<span class="val">Overlord Tyranny:</span> ${fmt(s.tyranny,1)} AD
+<span class="val">Sterak (45% base AD):</span> ${fmt(s.sterakAD,1)} AD
+<span class="val">Retribution:</span> ${fmt(s.retr*100,1)}% total AD
+<span class="result">Total AD / HP:</span> ${fmt(s.totalAD,1)} / ${fmt(s.totalHP,1)}
+<span class="val">Current / max Grit:</span> ${fmt(s.currentGrit,1)} / ${fmt(s.gritCap,1)}
+<span class="val">W ratio:</span> 25% + 25% per 100 bonus AD = ${fmt(s.wRatio*100,1)}% of Grit`;
+  renderStatGrid('sett-stat-grid',[{label:'Total HP',value:fmt(s.totalHP),hl:'highlight-green'},{label:'Total AD',value:fmt(s.totalAD,1),hl:'highlight-gold'},{label:'Bonus AD',value:fmt(s.bonusAD,1)},{label:'Max Grit',value:fmt(s.gritCap),hl:'highlight-red'},{label:'W Current Grit',value:fmt(s.w),hl:'highlight-red'},{label:'W Maximum Grit',value:fmt(s.wMax),hl:'highlight-red'},{label:'Heartsteel Hit',value:fmt(s.heartsteel),sub:'0 if not equipped'},{label:'Warmog Bonus HP',value:fmt(s.warmogBonus),sub:'12% item-sourced HP'},{label:'Physical EHP',value:fmt(s.ehp),hl:'highlight-green'},{label:'Gold Spent',value:fmt(s.cost)+'g',hl:'highlight-gold'}]);
+  renderAbilityTable('sett-ability-table',[{name:'Left punch',dmg:fmt(s.totalAD*resistMultiplier(val('sett-target-armor',100))),note:'post-mitigation'},{name:'Right punch',dmg:fmt(s.rightPunch),note:'includes 5–90 +55% bonus AD'},{name:'Two-punch sequence',dmg:fmt(s.twoPunch),note:'left + right'},{name:'Q hit',dmg:fmt(s.qHit),note:'target max-HP scaling'},{name:'W center (current Grit)',dmg:fmt(s.w),note:'TRUE damage'},{name:'W center (maximum Grit)',dmg:fmt(s.wMax),note:'optimizer objective'},{name:'E',dmg:fmt(s.e),note:'post-mitigation'},{name:'R epicenter',dmg:fmt(s.r),note:'includes target bonus HP'},{name:'Heartsteel proc',dmg:fmt(s.heartsteel),note:'70 + 6% own max HP, post-mitigation'}]);
+}
+function calcVlad(){
+  if(!DATA.loaded)return;const s=vladState(selectedBuild('vlad'));
+  document.getElementById('vlad-formula-trace').innerHTML=`<span class="val">Item AP / HP:</span> ${fmt(s.st.ap,1)} / ${fmt(s.st.hp,1)}\n<span class="val">HP → AP:</span> ${fmt(s.st.hp*.033,1)} AP\n<span class="val">Riftmaker HP → AP:</span> ${fmt(s.riftAP,1)} AP (fixed point)\n<span class="val">Deathcap multiplier:</span> ×${fmt(s.rad,2)}\n<span class="result">Total AP:</span> ${fmt(s.totalAP,1)}\n<span class="val">AP → HP:</span> ${fmt(s.passiveHP,1)} bonus HP (conversion outputs do not self-stack)\n<span class="result">Total HP:</span> ${fmt(s.totalHP,1)}\n<span class="val">Effective MR:</span> ${fmt(s.effectiveMR,1)} after reduction and penetration`;
+  renderStatGrid('vlad-stat-grid',[{label:'Total AP',value:fmt(s.totalAP,1),hl:'highlight-purple'},{label:'Total HP',value:fmt(s.totalHP),hl:'highlight-green'},{label:'Passive HP',value:fmt(s.passiveHP),sub:'from AP only'},{label:'Riftmaker AP',value:fmt(s.riftAP,1),sub:'fixed-point result'},{label:'Magic Pen',value:`${fmt(s.st.magicPenFlat,1)} / ${fmt(s.st.magicPenPct,1)}%`,hl:'highlight-red'},{label:'Damage Amp',value:fmt((s.amp-1)*100,1)+'%'},{label:'Selected Q',value:fmt(s.selectedQ),sub:val('vlad-crimsonrush',0)?'Crimson Rush':'normal Q',hl:'highlight-purple'},{label:'Combo Damage',value:fmt(s.combo),hl:'highlight-purple'},{label:'Gold Spent',value:fmt(s.cost)+'g',hl:'highlight-gold'}]);
+  renderAbilityTable('vlad-ability-table',[{name:'Q',dmg:fmt(s.q),note:'post-mitigation'},{name:'Empowered Q',dmg:fmt(s.empQ),note:'85% increased damage'},{name:'E full charge',dmg:fmt(s.e),note:'base +6% max HP +80% AP'},{name:'R detonation',dmg:fmt(s.r),note:'base +70% AP'},{name:'R-first Q+E+R',dmg:fmt(s.combo),note:'Hemoplague amp + item amps + marked Liandry burn'},{name:'10s throughput',dmg:fmt(s.throughput),note:'simplified cooldown throughput with ability haste'},{name:'Liandry burn',dmg:fmt(s.burn),note:'0 if not equipped'}]);
+}
+
+
+function jhinSameGroupSignature(a,b){return a.purchaseGroups.slice().sort().join('|')===b.purchaseGroups.slice().sort().join('|');}
+function jhinDominates(y,x){
+  if(y===x||!jhinSameGroupSignature(y,x)||Math.abs(jhinItemCrit(y)-jhinItemCrit(x))>1e-9)return false;
+  const keys=['ad','as','mana','hp'];let strict=false;
+  for(const k of keys){if(Number(y[k]||0)<Number(x[k]||0)-1e-9)return false;if(Number(y[k]||0)>Number(x[k]||0)+1e-9)strict=true;}
+  return strict;
+}
+function pruneJhinCandidates(items){
+  const forced=new Set(['Muramana','Yun Tal Wildarrows',"Sterak's Gage",'Sterak’s Gage',"Overlord's Bloodmail","Warmog's Armor"]);
+  return items.filter(x=>forced.has(x.name)||items.filter(y=>jhinDominates(y,x)).length<6);
+}
+function jhinLegalAdd(item,usedGroups,crit){return !item.purchaseGroups.some(g=>usedGroups.has(g))&&crit+jhinItemCrit(item)<=100+1e-9;}
+function betterJhin(current,build,withBoot){const s=jhinState(build,{questBoot:withBoot});if(!s.validCrit)return current;const row={ids:build.map(i=>i.id),totalAD:s.totalAD,passiveAD:s.passiveAD,cost:s.cost,effectiveCrit:s.effectiveCrit};return !current||row.totalAD>current.totalAD+1e-9?row:current;}
+function jhinOptimisticBound(items,start,need,agg,flags,withBoot){
+  const rem=items.slice(start),top=k=>rem.map(i=>Number(i[k]||0)).sort((a,b)=>b-a).slice(0,need).reduce((a,b)=>a+b,0),topCrit=rem.map(jhinItemCrit).sort((a,b)=>b-a).slice(0,need).reduce((a,b)=>a+b,0);
+  const lvl=clamp(Math.round(val('jhin-level',18)),1,18),baseAD=riotGrowth(championStat('Jhin','attackdamage',61),championStat('Jhin','attackdamageperlevel',4.4),lvl),baseMana=riotGrowth(championStat('Jhin','mp',300),championStat('Jhin','mpperlevel',50),lvl);
+  const ad=agg.ad+top('ad'),mana=agg.mana+top('mana'),hp=agg.hp+top('hp'),as=agg.as+top('as'),canMura=flags.mura||rem.some(i=>i.name==='Muramana'),canSterak=flags.sterak||rem.some(i=>["Sterak's Gage",'Sterak’s Gage'].includes(i.name)),canBloodmail=flags.bloodmail||rem.some(i=>i.name==="Overlord's Bloodmail"),canWarmog=flags.warmog||rem.some(i=>i.name==="Warmog's Armor"),canYun=flags.yun||rem.some(i=>i.name==='Yun Tal Wildarrows');
+  const optimisticHP=hp*(canWarmog?1.12:1),muraAD=canMura?.02*(baseMana+mana):0,sterakAD=canSterak?.45*baseAD:0,bloodmailAD=canBloodmail?.025*optimisticHP:0,pre=baseAD+ad+muraAD+sterakAD+bloodmailAD,crit=Math.min(100,agg.crit+topCrit),bonusAS=as+(canYun?30:0)+(withBoot?Number(jhinQuestBoot()?.as||25):0),pct=(JHIN_EMM[lvl-1]+.35*crit+.3*bonusAS)/100;
+  return pre*(1+pct);
+}
+function optimizeJhinMaxAD(){
+  if(!DATA.loaded)return;const btn=document.getElementById('jhin-optimize-btn'),status=document.getElementById('jhin-optimizer-status'),box=document.getElementById('jhin-optimizer-results');btn.disabled=true;box.innerHTML='';status.textContent='Enumerating exact legal ≤100% crit builds…';
+  requestAnimationFrame(()=>setTimeout(()=>{try{
+    const raw=DATA.items.filter(i=>championRelevance('jhin',i)),items=pruneJhinCandidates(raw).sort((a,b)=>jhinStaticContribution(b)-jhinStaticContribution(a)),chosen=[],groups=new Set();let best0=null,bestB=null,evaluated=0,bounded=0;
+    const reference=JHIN_REFERENCE.map(n=>items.find(i=>i.name===n)).filter(Boolean);if(reference.length===6&&jhinEffectiveCrit(reference)<=100){best0=betterJhin(best0,reference,false);bestB=betterJhin(bestB,reference,true);}
+    const greedy=[],greedyGroups=new Set();let greedyCrit=0;for(const i of items){if(greedy.length===6)break;if(jhinLegalAdd(i,greedyGroups,greedyCrit)){greedy.push(i);greedyCrit+=jhinItemCrit(i);i.purchaseGroups.forEach(g=>greedyGroups.add(g));}}
+    if(greedy.length===6){best0=betterJhin(best0,greedy,false);bestB=betterJhin(bestB,greedy,true);}
+    function dfs(start,agg,flags){
+      const need=6-chosen.length;if(need===0){evaluated++;best0=betterJhin(best0,chosen,false);bestB=betterJhin(bestB,chosen,true);return;}if(items.length-start<need)return;
+      if(best0&&bestB){const ub0=jhinOptimisticBound(items,start,need,agg,flags,false),ubB=jhinOptimisticBound(items,start,need,agg,flags,true);if(ub0<=best0.totalAD+1e-9&&ubB<=bestB.totalAD+1e-9){bounded++;return;}}
+      for(let idx=start;idx<=items.length-need;idx++){
+        const it=items[idx],ic=jhinItemCrit(it);if(!jhinLegalAdd(it,groups,agg.crit))continue;chosen.push(it);it.purchaseGroups.forEach(g=>groups.add(g));dfs(idx+1,{ad:agg.ad+it.ad,as:agg.as+it.as,mana:agg.mana+it.mana,hp:agg.hp+it.hp,crit:agg.crit+ic},{mura:flags.mura||it.name==='Muramana',yun:flags.yun||it.name==='Yun Tal Wildarrows',sterak:flags.sterak||["Sterak's Gage",'Sterak’s Gage'].includes(it.name),bloodmail:flags.bloodmail||it.name==="Overlord's Bloodmail",warmog:flags.warmog||it.name==="Warmog's Armor"});it.purchaseGroups.forEach(g=>groups.delete(g));chosen.pop();
+      }
+    }
+    dfs(0,{ad:0,as:0,mana:0,hp:0,crit:0},{mura:false,yun:false,sterak:false,bloodmail:false,warmog:false});jhinMaxCache.noBoot=best0;jhinMaxCache.boot=bestB;renderJhinMaxResults();status.textContent=`Exact search complete: ${raw.length} relevant finals → ${items.length} safely retained; ${fmt(evaluated)} legal six-item builds evaluated, ${fmt(bounded)} branches bounded. Crit never exceeded 100%.`;
+  }catch(e){console.error(e);status.textContent=`Optimizer error: ${e.message}`;}finally{btn.disabled=false;}},0));
+}
+function jhinMaxResultRow(title,row,withBoot){if(!row)return'';return `<div class="build-row"><div class="build-rank">MAX</div><div class="build-items">${row.ids.map(id=>{const i=DATA.byId.get(id);return `<span class="build-chip"><img src="${itemIcon(i)}" alt="">${escapeHtml(i.name)}</span>`;}).join('')}${withBoot&&jhinQuestBoot()?`<span class="build-chip"><img src="${itemIcon(jhinQuestBoot())}" alt="">Berserker's Greaves</span>`:''}</div><div><div class="build-score">${fmt(row.totalAD,1)} AD</div><div class="build-cost">+${fmt(row.passiveAD,1)} Whisper AD · ${fmt(row.effectiveCrit,0)}% crit</div></div><button class="action-btn" onclick="applyJhinMaxBuild('${withBoot?'boot':'noBoot'}')">Apply</button></div>`;}
+function renderJhinMaxResults(){document.getElementById('jhin-optimizer-results').innerHTML=`<div class="optimizer-note"><strong>Six items — no quest-boot slot</strong></div>${jhinMaxResultRow('No boot',jhinMaxCache.noBoot,false)}<div class="optimizer-note" style="margin-top:12px"><strong>Six items + separate bot-quest Berserker's Greaves</strong></div>${jhinMaxResultRow('Quest boot',jhinMaxCache.boot,true)}`;}
+function applyJhinMaxBuild(mode){const row=jhinMaxCache[mode];if(!row)return;selectedItems.jhin=new Set(row.ids);document.getElementById('jhin-quest-boot').value=mode==='boot'?'1':'0';renderItemToggles('jhin');calcJhin();window.scrollTo({top:0,behavior:'smooth'});}
+
+function objectiveOf(c){return document.getElementById(`${c}-objective`)?.value||'totalAD';}
+function scoreBuild(c,b,o){return c==='jhin'?jhinScore(b,o):c==='sett'?settScore(b,o):vladScore(b,o);}
+function objectiveLabel(c,o){const sel=document.getElementById(`${c}-objective`);return sel.options[sel.selectedIndex].text;}
+function objectiveVector(c,i,o){
+  if(c==='jhin')return [i.ad,i.crit,i.as,i.lethality,i.armorPenPct,i.critDamage];
+  if(c==='sett')return o==='ehp'?[i.hp,i.armor,i.ad]:[i.hp,i.ad];
+  return o==='hp'?[i.hp,i.ap]:o==='sustained'?[i.ap,i.hp,i.ah,i.magicPenFlat,i.magicPenPct]:[i.ap,i.hp,i.magicPenFlat,i.magicPenPct];
+}
+function paretoPrune(c,items,o,goldCap){
+  return items.filter((x,ix)=>{
+    if(x.modeled)return true;
+    const vx=objectiveVector(c,x,o);
+    return !items.some((y,iy)=>{
+      if(ix===iy||y.modeled)return false;
+      if(goldCap>0&&y.cost>x.cost)return false;
+      const vy=objectiveVector(c,y,o); let strict=false;
+      for(let k=0;k<vx.length;k++){if(vy[k]<vx[k]-1e-9)return false;if(vy[k]>vx[k]+1e-9)strict=true;}
+      return strict;
+    });
+  });
+}
+function prepareCandidates(c,o,goldCap,slots){
+  const relevant=DATA.items.filter(i=>championRelevance(c,i,o));
+  const excludedRisk=relevant.filter(i=>objectivePassiveRisk(c,i));
+  let a=relevant.filter(i=>!objectivePassiveRisk(c,i));
+  a=paretoPrune(c,a,o,goldCap);
+  const forced=a.filter(i=>i.modeled);
+  a.sort((x,y)=>scoreBuild(c,[y],o)-scoreBuild(c,[x],o));
+  const maxCombos=2000000;
+  let exact=true;
+  while(chooseCount(a.length,slots)>maxCombos&&a.length>slots){
+    const removable=[...a].reverse().find(i=>!forced.includes(i));
+    if(!removable)break; a=a.filter(i=>i!==removable); exact=false;
+  }
+  return {items:a,exact,total:chooseCount(a.length,slots),excludedRisk};
+}
+function optimizeBuild(c){
+  if(!DATA.loaded)return;
+  const btn=document.getElementById(`${c}-optimize-btn`),status=document.getElementById(`${c}-optimizer-status`),slots=clamp(Math.round(val(`${c}-opt-slots`,6)),1,6),gold=Math.max(0,val(`${c}-opt-gold`,0)),o=objectiveOf(c);
+  btn.disabled=true;status.textContent='Preparing candidate set…';document.getElementById(`${c}-optimizer-results`).innerHTML='';
+  requestAnimationFrame(()=>setTimeout(()=>{
+    try{
+      const prep=prepareCandidates(c,o,gold,slots),a=prep.items,top=[];
+      status.textContent=`Evaluating legal combinations from ${a.length} candidates…`;
+      const chosen=[],usedGroups=new Set();let evaluated=0;
+      function push(build,score,cost){
+        if(!Number.isFinite(score))return; const row={ids:build.map(i=>i.id),score,cost};
+        let pos=top.findIndex(x=>score>x.score);if(pos<0)pos=top.length;top.splice(pos,0,row);if(top.length>5)top.pop();
+      }
+      function dfs(start,cost){
+        const need=slots-chosen.length;if(need===0){evaluated++;push(chosen,scoreBuild(c,chosen,o),cost);return;}
+        for(let idx=start;idx<=a.length-need;idx++){
+          const it=a[idx],nc=cost+it.cost;if(gold>0&&nc>gold)continue;
+          if(it.purchaseGroups.some(g=>usedGroups.has(g)))continue;
+          chosen.push(it);it.purchaseGroups.forEach(g=>usedGroups.add(g));dfs(idx+1,nc);it.purchaseGroups.forEach(g=>usedGroups.delete(g));chosen.pop();
+        }
+      }
+      dfs(0,0);optimizerCache[c]=top;renderOptimizerResults(c,o,top,prep,a.length,slots,gold);
+      status.textContent='Done.';
+    }catch(e){console.error(e);status.textContent=`Optimizer error: ${e.message}`;}finally{btn.disabled=false;}
+  },0));
+}
+function renderOptimizerResults(c,o,rows,prep,candidates,slots,gold){
+  const box=document.getElementById(`${c}-optimizer-results`);if(!rows.length){box.innerHTML='<div class="warning-box">No legal build satisfies the selected slot and gold constraints.</div>';return;}
+  const unit=(c==='sett'&&o==='ehp')||(c==='vlad'&&o==='hp')?'': ' damage';
+  box.innerHTML=`<div class="optimizer-note">${escapeHtml(objectiveLabel(c,o))}</div><div class="top-builds">${rows.map((r,n)=>`<div class="build-row"><div class="build-rank">#${n+1}</div><div class="build-items">${r.ids.map(id=>{const i=DATA.byId.get(id);return `<span class="build-chip"><img src="${itemIcon(i)}" alt="">${escapeHtml(i.name)}</span>`}).join('')}</div><div><div class="build-score">${fmt(r.score,1)}${unit}</div><div class="build-cost">${fmt(r.cost)}g</div></div><button class="action-btn" onclick="applyOptimizedBuild('${c}',${n})">Apply</button></div>`).join('')}</div>`;
+}
+function applyOptimizedBuild(c,n){const r=optimizerCache[c]?.[n];if(!r)return;selectedItems[c]=new Set(r.ids);renderItemToggles(c);calcChampion(c);}
+
+
+
+// =====================================================================
+// ALL CHAMPIONS — FINITE MAXIMUM SHEET STATS
+// =====================================================================
+function canonicalChampionKey(value){
+  return String(value||'').normalize('NFKD').replace(/[’`]/g,"'").replace(/[^a-z0-9]+/gi,' ').trim().toLowerCase();
+}
+function rebuildAllStatsChampionIndex(){
+  const byId=new Map(),seenNames=new Set();
+  for(const [sourceKey,raw] of Object.entries(DATA.champions||{})){
+    if(!raw||typeof raw!=='object')continue;
+    const id=String(raw.id||sourceKey||'').trim(),name=String(raw.name||raw.id||sourceKey||'').trim();
+    if(!id||!name)continue;
+    const idKey=canonicalChampionKey(id),nameKey=canonicalChampionKey(name);
+    if(!idKey||!nameKey||byId.has(idKey)||seenNames.has(nameKey))continue;
+    const champion={...raw,id,name};
+    byId.set(idKey,champion);seenNames.add(nameKey);
+  }
+  DATA.allStatsChampions=[...byId.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  DATA.allStatsChampionById=new Map(DATA.allStatsChampions.map(c=>[c.id,c]));
+}
+function populateAllStatsChampions(){
+  const sel=document.getElementById('allstats-champion'); if(!sel)return;
+  const previous=sel.value||'Jhin';
+  rebuildAllStatsChampionIndex();
+  const champs=DATA.allStatsChampions;
+  sel.innerHTML=champs.map(c=>`<option value="${escapeAttr(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+  sel.value=DATA.allStatsChampionById.has(previous)?previous:(DATA.allStatsChampionById.has('Jhin')?'Jhin':champs[0]?.id||'');
+  renderAllStatsObjectivePills(); updateMandateEligibility();
+}
+function renderAllStatsObjectivePills(){
+  const grid=document.getElementById('allstats-objective-grid'),sel=document.getElementById('allstats-objective'); if(!grid||!sel)return;
+  grid.innerHTML=ALLSTATS_OBJECTIVES.map(([id,label])=>`<button type="button" class="stat-objective-pill ${sel.value===id?'active':''}" onclick="setAllStatsObjective('${id}')">${escapeHtml(label)}</button>`).join('');
+}
+function setAllStatsObjective(id){document.getElementById('allstats-objective').value=id;allStatsObjectiveChanged();}
+function allStatsObjectiveChanged(){renderAllStatsObjectivePills();updateMandateEligibility();renderAllStatsPreview();document.getElementById('allstats-results').innerHTML='';}
+function allStatsChampionChanged(){updateMandateEligibility();renderAllStatsPreview();document.getElementById('allstats-results').innerHTML='';}
+function allStatsLane(){return document.getElementById('allstats-lane')?.value||'bot';}
+function allStatsLaneLabel(lane=allStatsLane()){return ({top:'Top',jungle:'Jungle',mid:'Mid',bot:'Bot',support:'Support'})[lane]||lane;}
+function allStatsLaneChanged(){renderAllStatsPreview();document.getElementById('allstats-results').innerHTML='';const s=document.getElementById('allstats-optimizer-status');if(s)s.textContent='Lane changed — run the optimizer again.';}
+function selectedAllStatsChampion(){const id=document.getElementById('allstats-champion')?.value;return DATA.allStatsChampionById.get(id)||DATA.allStatsChampions[0]||null;}
+function allStatsObjective(){return document.getElementById('allstats-objective')?.value||'ad';}
+function allStatsLevel(){return clamp(Math.round(val('allstats-level',18)),1,18);}
+function allStatsAttackSpeedCap(ch){return ch?.id==='Belveth'||ch?.name==="Bel'Veth"?10.0:3.0;}
+function championUsesMana(ch){return Number(ch?.stats?.mp||0)>0&&String(ch?.partype||'').toLowerCase()==='mana';}
+function championIsRanged(ch){return Number(ch?.stats?.attackrange||0)>250;}
+function allStatsAdGrowth(ch){
+  const current=Number(ch?.stats?.attackdamageperlevel||0); if(current>0)return {value:current,source:`Data Dragon ${DATA.version}`};
+  const old=Number(DATA.adGrowthFallback?.[ch?.id]?.stats?.attackdamageperlevel||0); if(old>0)return {value:old,source:'official Data Dragon 16.4.1 fallback (current field is zero)'};
+  const known={Jhin:4.4,Sett:3.75,Vladimir:3}; return {value:known[ch?.id]||0,source:known[ch?.id]?'verified local adapter':'unavailable'};
+}
+function allStatsBase(ch,level=allStatsLevel()){
+  const st=ch?.stats||{},adg=allStatsAdGrowth(ch);
+  return {
+    level,name:ch?.name||'',id:ch?.id||'',partype:ch?.partype||'',ranged:championIsRanged(ch),usesMana:championUsesMana(ch),
+    hp:riotGrowth(Number(st.hp||0),Number(st.hpperlevel||0),level),
+    armor:riotGrowth(Number(st.armor||0),Number(st.armorperlevel||0),level),
+    mr:riotGrowth(Number(st.spellblock||0),Number(st.spellblockperlevel||0),level),
+    ad:riotGrowth(Number(st.attackdamage||0),adg.value,level), adGrowth:adg,
+    mana:riotGrowth(Number(st.mp||0),Number(st.mpperlevel||0),level),
+    ms:Number(st.movespeed||0), asBase:Number(st.attackspeed||0), asGrowth:Number(st.attackspeedperlevel||0)*(level<=1?0:(level-1)*(.7025+.0175*(level-1)))
+  };
+}
+function detailCapabilities(detail){
+  const spells=detail?.spells||[];
+  const texts=spells.map(s=>`${s.name||''} ${s.description||''} ${s.tooltip||''}`);
+  const immobilize=/\b(stun(?:s|ned)?|root(?:s|ed)?|snare(?:s|d)?|airborne|knock(?:s|ed|ing)?\s*(?:up|back|aside)|taunt(?:s|ed)?|charm(?:s|ed)?|fear(?:s|ed)?|flee(?:s|ing)?|sleep|drowsy|suppress(?:es|ed|ion)?|immobiliz(?:e|es|ed|ing)|pull(?:s|ed)?\s+(?:them|enemies)|displace(?:s|d)?)\b/i;
+  const allySupport=/(?:heal|shield|protect|empower)[^.!?]{0,100}\b(?:an ally|allied champion|allies|allied champions)\b|\b(?:an ally|allied champion|allies|allied champions)\b[^.!?]{0,100}(?:heal|shield|protect|empower)/i;
+  return {immobilizeAny:texts.some(t=>immobilize.test(t)),immobilizeBasic:texts.slice(0,3).some(t=>immobilize.test(t)),immobilizeUltimate:texts.slice(3,4).some(t=>immobilize.test(t)),allyHealShield:texts.some(t=>allySupport.test(t))};
+}
+async function ensureChampionDetail(ch){
+  if(!ch)return null;if(DATA.championDetails.has(ch.id))return DATA.championDetails.get(ch.id);
+  const url=`https://ddragon.leagueoflegends.com/cdn/${DATA.version}/data/en_US/champion/${encodeURIComponent(ch.id)}.json`;
+  try{const json=await fetchJson(url),detail=json?.data?.[ch.id]||Object.values(json?.data||{})[0]||null;DATA.championDetails.set(ch.id,detail);DATA.championCaps.set(ch.id,detailCapabilities(detail));return detail;}catch(e){console.warn('champion detail failed',e);DATA.championDetails.set(ch.id,null);DATA.championCaps.set(ch.id,{immobilizeAny:false,immobilizeBasic:false,immobilizeUltimate:false,allyHealShield:false});return null;}
+}
+function detailHasImmobilize(detail){
+  const text=(detail?.spells||[]).map(s=>`${s.name||''} ${s.description||''} ${s.tooltip||''}`).join(' ');
+  return /\b(stun(?:s|ned)?|root(?:s|ed)?|snare(?:s|d)?|airborne|knock(?:s|ed|ing)?\s*(?:up|back|aside)|taunt(?:s|ed)?|charm(?:s|ed)?|fear(?:s|ed)?|flee(?:s|ing)?|sleep|drowsy|suppress(?:es|ed|ion)?|immobiliz(?:e|es|ed|ing)|pull(?:s|ed)?\s+(?:them|enemies)|displace(?:s|d)?)\b/i.test(text);
+}
+async function updateMandateEligibility(){
+  const box=document.getElementById('allstats-mandate-status'); if(!box||!DATA.loaded)return;
+  const ch=selectedAllStatsChampion();box.textContent='Checking Riot spell data…';
+  const detail=await ensureChampionDetail(ch),caps=DATA.championCaps.get(ch.id)||detailCapabilities(detail),ok=caps.immobilizeAny;box.dataset.eligible=ok?'1':'0';
+  box.innerHTML=detail?(ok?`<span class="eligibility-ok">Eligible</span> · immobilizing spell found`:`<span class="eligibility-no">Not eligible</span>`):`Spell data unavailable`;
+  renderAllStatsPreview();
+}
+function allStatsObjectiveMeta(o){
+  return {
+    ad:['Attack Damage','AD',''],
+    ap:['Ability Power','AP',''],
+    ah_no_mandate:['Visible Ability Haste',' AH','General AH only.'],
+    ah_mandate:['Visible AH + Imperial Mandate',' AH','Mandate required. General AH only.'],
+    lethality:['Lethality',' Lethality','Flat lethality only.'],
+    magic_pen_flat:['Flat Magic Penetration',' Magic Pen','Flat magic penetration only.'],
+    ms:['Movement Speed',' MS',''],
+    as:['Attack Speed',' attacks/s',''],
+    armor:['Armor',' Armor',''],
+    mr:['Magic Resist',' MR',''],
+    hp:['Health',' HP','']
+  }[o];
+}
+function allStatsCompatible(ch,item,o){
+  const b=allStatsBase(ch); if(item.rangedOnly&&!b.ranged)return false;if(item.meleeOnly&&b.ranged)return false;
+  // Manaless champions can own many mana-bearing items, but they do not gain mana or mana-regeneration benefits.
+  // Fully transformed Tear items are excluded because a manaless champion cannot complete Manaflow stacks.
+  if(!b.usesMana&&item.purchaseGroups.includes('tear'))return false;
+  if(o==='ah_no_mandate'&&item.name==='Imperial Mandate')return false;
+  return true;
+}
+function allStatsItemRelevant(ch,item,o){
+  if(!allStatsCompatible(ch,item,o))return false; const b=allStatsBase(ch);
+  const movementValue=item.msFlat>0||item.msPct>0||item.peakMsFlat>0||item.peakMsPct>0||item.peakTotalMsPct>0||item.youmuuOocMelee>0||item.youmuuOocRanged>0||item.youmuuActiveMelee>0||item.youmuuActiveRanged>0;
+  if(o==='ad')return item.ad>0||(b.usesMana&&item.mana>0)||item.hp>0||item.as>0||item.crit>0||item.muramanaAwe||item.sterakBaseAdPct||item.overlordHpToAdPct||item.warmogItemHpPct||item.swiftmarchAdaptivePct||movementValue;
+  if(o==='ap')return item.ap>0||(b.usesMana&&(item.mana>0||item.manaRegen>0))||item.hp>0||item.seraphAwePct||item.rabadonAmp||item.riftHpToApPct||item.mejaiApPerStack||item.roaStackAP||item.dawncoreApPer100||item.blackfireApPctPerTarget||item.staffBuffAP||item.swiftmarchAdaptivePct||movementValue;
+  if(o.startsWith('ah_'))return item.ah>0||item.staffBuffAH>0||item.name==='Imperial Mandate';
+  if(o==='lethality')return item.lethality>0;
+  if(o==='magic_pen_flat')return item.magicPenFlat>0;
+  if(o==='ms')return movementValue;
+  if(o==='as')return item.as>0||item.peakAsPct>0||item.ardentBuffAS>0||item.hexplateBuffAS>0;
+  if(o==='armor')return item.armor>0||item.jakshoBonusResistPct>0||item.terminusMaxLightStacks>0;
+  if(o==='mr')return item.mr>0||item.jakshoBonusResistPct>0||item.forceNatureBonusMR>0||item.terminusMaxLightStacks>0;
+  return item.hp>0||item.ap>0||item.manaRegen>0||item.roaStackHP>0||item.warmogItemHpPct>0||item.radiantMaxHpPct>0||item.rabadonAmp||item.riftHpToApPct>0||item.dawncoreApPer100>0||item.staffBuffAP>0||item.swiftmarchAdaptivePct>0||movementValue;
+}
+function allStatsMovement(ch,build,peak=true){
+  const b=allStatsBase(ch),st=sumStats(build);let flat=b.ms+st.msFlat,pct=st.msPct,totalPct=0;
+  if(peak){for(const i of build){
+    flat+=Number(i.peakMsFlat||0);pct+=Number(i.peakMsPct||0);totalPct+=Number(i.peakTotalMsPct||0);
+    if(i.name==="Youmuu's Ghostblade"){flat+=b.ranged?Number(i.youmuuOocRanged||0):Number(i.youmuuOocMelee||0);pct+=b.ranged?Number(i.youmuuActiveRanged||0):Number(i.youmuuActiveMelee||0);}
+  }}
+  let raw=flat*(1+pct/100)*(1+totalPct/100),final=raw;
+  if(raw>490)final=raw*.5+230;else if(raw>415)final=raw*.8+83;else if(raw<220)final=raw*.5+110;
+  return {base:b.ms,flat,pct,totalPct,raw,final};
+}
+function allStatsState(ch,build,o,opts={}){
+  const level=opts.level??allStatsLevel(),peak=opts.peak??!!val('allstats-peak',1),b=allStatsBase(ch,level),st=sumStats(build),names=new Set(build.map(i=>i.name)),caps=DATA.championCaps.get(ch.id)||{immobilizeAny:false,immobilizeBasic:false,immobilizeUltimate:false,allyHealShield:false};
+  const roa=build.find(i=>i.name==='Rod of Ages'),roaAP=peak&&roa?roa.roaStackAP:0,roaHP=peak&&roa?roa.roaStackHP:0,roaMana=peak&&roa?roa.roaStackMana:0;
+  const movement=allStatsMovement(ch,build,peak),swift=build.find(i=>i.name==='Swiftmarch'),adaptive=swift?(swift.swiftmarchAdaptivePct/100)*movement.final:0;
+  let score=0,parts=[];
+  if(o==='ad'){
+    const warmog=build.find(i=>i.name==="Warmog's Armor"),blood=build.find(i=>i.name==="Overlord's Bloodmail"),mura=build.find(i=>i.name==='Muramana'),sterak=build.find(i=>["Sterak's Gage",'Sterak’s Gage'].includes(i.name));
+    const flatHP=st.hp+roaHP,bonusHP=flatHP+(warmog?(warmog.warmogItemHpPct/100)*flatHP:0),usableMana=b.usesMana?(b.mana+st.mana+roaMana):0,muraAD=mura?(mura.muramanaAwe/100)*usableMana:0,sterakAD=sterak?(sterak.sterakBaseAdPct/100)*b.ad:0,bloodAD=blood?(blood.overlordHpToAdPct/100)*bonusHP:0,adaptiveAD=adaptive*.6;
+    let pre=b.ad+st.ad+muraAD+sterakAD+bloodAD+adaptiveAD;
+    if(ch.id==='Jhin'){
+      const crit=build.reduce((n,i)=>n+jhinItemCrit(i),0),ardent=build.find(i=>i.name==='Ardent Censer'),conditionalAS=peak?build.reduce((n,i)=>n+Number(i.peakAsPct||0)+Number(i.hexplateBuffAS||0),0)+(ardent&&caps.allyHealShield?ardent.ardentBuffAS:0):0,bonusAS=st.as+conditionalAS,rate=(JHIN_EMM[level-1]+.35*Math.min(100,crit)+.3*bonusAS)/100,bloodAmp=peak&&blood?blood.overlordMaxAmp/100:0;score=pre*(1+rate)*(1+bloodAmp);parts=[`Base ${fmt(b.ad,1)}`,`flat/items ${fmt(st.ad,1)}`,`conversions ${fmt(muraAD+sterakAD+bloodAD+adaptiveAD,1)}`,`Whisper +${fmt(pre*rate,1)} (${fmt(bonusAS,1)}% bonus AS)`,bloodAmp?`Bloodmail peak ×${fmt(1+bloodAmp,2)}`:''];
+    } else {const amp=peak&&blood?blood.overlordMaxAmp/100:0;score=pre*(1+amp);parts=[`Base ${fmt(b.ad,1)}`,`flat/items ${fmt(st.ad,1)}`,`conversions ${fmt(muraAD+sterakAD+bloodAD+adaptiveAD,1)}`,amp?`Bloodmail ×${fmt(1+amp,2)}`:''];}
+  } else if(o==='ap'){
+    const mejai=build.find(i=>i.name==="Mejai's Soulstealer"),seraph=build.find(i=>i.name==="Seraph's Embrace"),deathcap=build.find(i=>i.name==="Rabadon's Deathcap"),rift=build.find(i=>i.name==='Riftmaker'),warmog=build.find(i=>i.name==="Warmog's Armor");
+    const dawn=build.find(i=>i.name==='Dawncore'),blackfire=build.find(i=>i.name==='Blackfire Torch'),staff=build.find(i=>i.name==='Staff of Flowing Water');
+    const usableMana=b.usesMana?(st.mana+roaMana):0,usableManaRegen=b.usesMana?st.manaRegen:0,mejaiAP=peak&&mejai?mejai.mejaiApPerStack*mejai.mejaiMaxStacks:0,seraphAP=seraph?(seraph.seraphAwePct/100)*usableMana:0,dawnAP=dawn?(dawn.dawncoreApPer100/100)*usableManaRegen:0,staffAP=peak&&staff&&caps.allyHealShield?staff.staffBuffAP:0,blackfirePct=peak&&blackfire?blackfire.blackfireApPctPerTarget*blackfire.blackfireMaxTargets:0,totalAmp=((deathcap?deathcap.rabadonAmp:0)+blackfirePct)/100,rad=1+totalAmp,adaptiveAP=adaptive,flatHP=st.hp+roaHP,itemHP=flatHP+(warmog?(warmog.warmogItemHpPct/100)*flatHP:0),flatAP=st.ap+roaAP+mejaiAP+seraphAP+dawnAP+staffAP+adaptiveAP;
+    if(ch.id==='Vladimir'){
+      let riftAP=0,total=0,passiveHP=0;for(let n=0;n<80;n++){const pre=flatAP+itemHP*.033+riftAP;total=pre*rad;passiveHP=1.6*(flatAP+riftAP)*rad;const next=rift?(rift.riftHpToApPct/100)*(itemHP+passiveHP):0;if(Math.abs(next-riftAP)<1e-9){riftAP=next;break;}riftAP=next;}score=(flatAP+itemHP*.033+riftAP)*rad;parts=[`Printed/ROA ${fmt(st.ap+roaAP,1)}`,`Mejai/Seraph/Dawn/Staff ${fmt(mejaiAP+seraphAP+dawnAP+staffAP,1)}`,`Crimson Pact/Rift ${fmt(score/rad-flatAP,1)}`,`AP multipliers ×${fmt(rad,2)}`];
+    } else {const riftAP=rift?(rift.riftHpToApPct/100)*itemHP:0;score=(flatAP+riftAP)*rad;parts=[`Printed/ROA ${fmt(st.ap+roaAP,1)}`,`Mejai/Seraph/Dawn/Staff ${fmt(mejaiAP+seraphAP+dawnAP+staffAP,1)}`,`Rift ${fmt(riftAP,1)}`,`AP multipliers ×${fmt(rad,2)}`];}
+  } else if(o==='ah_no_mandate'||o==='ah_mandate'){
+    const mandate=build.find(i=>i.name==='Imperial Mandate'),staff=build.find(i=>i.name==='Staff of Flowing Water'),staffAH=peak&&staff&&caps.allyHealShield?staff.staffBuffAH:0;
+    const mandateExtra=o==='ah_mandate'&&mandate&&caps.immobilizeAny?mandate.mandateControlAH:0;
+    score=st.ah+staffAH+mandateExtra;
+    parts=[`Visible general item haste ${fmt(st.ah,0)}`,staffAH?`Visible Staff self-buff +${fmt(staffAH,0)}`:'',mandateExtra?`Mandate Control +${fmt(mandateExtra,0)} on a qualifying immobilizing ability`:''];
+  } else if(o==='lethality'){
+    score=st.lethality;parts=[`Flat item Lethality ${fmt(st.lethality,0)}`];
+  } else if(o==='magic_pen_flat'){
+    score=st.magicPenFlat;parts=[`Flat item Magic Penetration ${fmt(st.magicPenFlat,0)}`];
+  } else if(o==='ms'){score=movement.final;parts=[`Raw ${fmt(movement.raw,1)}`,`flat base ${fmt(movement.flat,1)}`,`+${fmt(movement.pct,1)}% additive`,`+${fmt(movement.totalPct,1)}% total`,`soft-capped ${fmt(score,1)}`];
+  } else if(o==='as'){
+    const ardent=build.find(i=>i.name==='Ardent Censer'),conditional=peak?build.reduce((n,i)=>n+Number(i.peakAsPct||0)+Number(i.hexplateBuffAS||0),0)+(ardent&&caps.allyHealShield?ardent.ardentBuffAS:0):0,bonus=b.asGrowth+st.as+conditional,uncapped=b.asBase*(1+bonus/100),cap=allStatsAttackSpeedCap(ch);score=ch.id==='Jhin'?b.asBase:Math.min(cap,uncapped);parts=[`Base/ratio ${fmt(b.asBase,3)}`,`level + item bonus ${fmt(b.asGrowth+st.as,1)}%`,`conditional +${fmt(conditional,1)}%`,ch.id==='Jhin'?'Jhin fixed attack speed':`uncapped ${fmt(uncapped,3)} · cap ${fmt(cap,2)}`];
+  } else if(o==='armor'||o==='mr'){
+    const base=o==='armor'?b.armor:b.mr,jak=build.find(i=>i.name==="Jak'Sho, The Protean"),force=build.find(i=>i.name==='Force of Nature'),terminus=build.find(i=>i.name==='Terminus');
+    let bonus=o==='armor'?st.armor:st.mr; const passiveParts=[];
+    if(peak&&o==='mr'&&force){bonus+=force.forceNatureBonusMR;passiveParts.push(`Force +${fmt(force.forceNatureBonusMR,0)}`);}
+    if(peak&&terminus){const per=level>=14?8:level>=11?7:6,term=per*terminus.terminusMaxLightStacks;bonus+=term;passiveParts.push(`Terminus Light +${fmt(term,0)}`);}
+    const mult=peak&&jak?1+jak.jakshoBonusResistPct/100:1;score=base+bonus*mult;parts=[`Base ${fmt(base,1)}`,`bonus before Jak'Sho ${fmt(bonus,1)}`,...passiveParts,jak&&peak?`Jak'Sho bonus resist ×${fmt(mult,2)}`:''];
+  } else {
+    const warmog=build.find(i=>i.name==="Warmog's Armor"),radiant=build.find(i=>i.name==='Radiant Virtue'),deathcap=build.find(i=>i.name==="Rabadon's Deathcap"),rift=build.find(i=>i.name==='Riftmaker'),mejai=build.find(i=>i.name==="Mejai's Soulstealer");let itemHP=st.hp+(warmog?(warmog.warmogItemHpPct/100)*st.hp:0),passiveHP=0;
+    itemHP=st.hp+roaHP+(warmog?(warmog.warmogItemHpPct/100)*(st.hp+roaHP):0);
+    if(ch.id==='Vladimir'){const dawn=build.find(i=>i.name==='Dawncore'),blackfire=build.find(i=>i.name==='Blackfire Torch'),staff=build.find(i=>i.name==='Staff of Flowing Water'),rad=1+((deathcap?deathcap.rabadonAmp:0)+(peak&&blackfire?blackfire.blackfireApPctPerTarget*blackfire.blackfireMaxTargets:0))/100,mejaiAP=peak&&mejai?mejai.mejaiApPerStack*mejai.mejaiMaxStacks:0,dawnAP=dawn&&b.usesMana?(dawn.dawncoreApPer100/100)*st.manaRegen:0,staffAP=peak&&staff&&caps.allyHealShield?staff.staffBuffAP:0,adaptiveAP=adaptive,flatAP=st.ap+roaAP+mejaiAP+dawnAP+staffAP+adaptiveAP;let riftAP=0;for(let n=0;n<80;n++){passiveHP=1.6*(flatAP+riftAP)*rad;const next=rift?(rift.riftHpToApPct/100)*(itemHP+passiveHP):0;if(Math.abs(next-riftAP)<1e-9){riftAP=next;break;}riftAP=next;}passiveHP=1.6*(flatAP+riftAP)*rad;}
+    score=b.hp+itemHP+passiveHP;if(peak&&radiant)score*=1+radiant.radiantMaxHpPct/100;parts=[`Base ${fmt(b.hp,1)}`,`item health ${fmt(st.hp,1)}`,warmog?`Warmog +${fmt(itemHP-st.hp,1)}`:'',passiveHP?`Crimson Pact +${fmt(passiveHP,1)}`:'',radiant&&peak?`Radiant ×${fmt(1+radiant.radiantMaxHpPct/100,3)}`:''];
+  }
+  return {score,parts:parts.filter(Boolean),cost:st.cost,movement,base:b};
+}
+function allStatsVector(i,o,ch){
+  const base=allStatsBase(ch),usesMana=base.usesMana,mana=usesMana?i.mana:0,regen=usesMana?(i.manaRegen||0):0;
+  const movement=[i.msFlat,i.msPct,i.peakMsFlat||0,i.peakMsPct||0,i.peakTotalMsPct||0,base.ranged?(i.youmuuOocRanged||0):(i.youmuuOocMelee||0),base.ranged?(i.youmuuActiveRanged||0):(i.youmuuActiveMelee||0)];
+  if(o==='ad')return [i.ad,i.hp,mana,i.as,i.crit,i.muramanaAwe||0,i.sterakBaseAdPct||0,i.overlordHpToAdPct||0,i.warmogItemHpPct||0,i.swiftmarchAdaptivePct||0,...movement];
+  if(o==='ap')return [i.ap,i.hp,mana,regen,i.roaStackAP||0,i.roaStackHP||0,usesMana?(i.roaStackMana||0):0,i.seraphAwePct||0,i.rabadonAmp||0,i.riftHpToApPct||0,i.mejaiApPerStack||0,usesMana?(i.dawncoreApPer100||0):0,i.blackfireApPctPerTarget||0,i.staffBuffAP||0,i.swiftmarchAdaptivePct||0,...movement];
+  if(o.startsWith('ah_'))return [i.ah,i.mandateControlAH||0,i.staffBuffAH||0];if(o==='lethality')return [i.lethality];if(o==='magic_pen_flat')return [i.magicPenFlat];if(o==='ms')return movement;if(o==='as')return [i.as,i.peakAsPct||0,i.ardentBuffAS||0,i.hexplateBuffAS||0];if(o==='armor')return [i.armor,i.jakshoBonusResistPct||0,i.terminusMaxLightStacks||0];if(o==='mr')return [i.mr,i.jakshoBonusResistPct||0,i.forceNatureBonusMR||0,i.terminusMaxLightStacks||0];return [i.hp,i.ap,i.manaRegen||0,i.roaStackHP||0,i.roaStackAP||0,i.warmogItemHpPct||0,i.radiantMaxHpPct||0,i.rabadonAmp||0,i.riftHpToApPct||0,i.dawncoreApPer100||0,i.staffBuffAP||0,i.swiftmarchAdaptivePct||0,...movement];
+}
+function groupSubset(a,b){return a.every(g=>b.includes(g));}
+function allStatsPareto(items,o,ch){
+  return items.filter((x,ix)=>!items.some((y,iy)=>{if(ix===iy)return false;if(ch.id==='Jhin'&&o==='ad'&&Math.abs(jhinItemCrit(x)-jhinItemCrit(y))>1e-9)return false;if(!groupSubset(y.purchaseGroups,x.purchaseGroups))return false;const vx=allStatsVector(x,o,ch),vy=allStatsVector(y,o,ch);let strict=false;for(let k=0;k<vx.length;k++){if(vy[k]<vx[k]-1e-9)return false;if(vy[k]>vx[k]+1e-9)strict=true;}return strict;}));
+}
+function allStatsLegalAdd(item,groups,build,ch,o){
+  if(item.purchaseGroups.some(g=>groups.has(g)))return false;
+  if(ch.id==='Jhin'&&o==='ad'&&jhinEffectiveCrit([...build,item])>100+1e-9)return false;
+  return true;
+}
+function allStatsBootOptions(ch,o,lane=allStatsLane()){
+  const boots=lane==='mid'
+    ? DATA.statItems.filter(i=>MID_ENHANCED_BOOT_IDS.has(String(i.id)))
+    : DATA.statItems.filter(isStandardTier2Boot);
+  return boots.filter(i=>allStatsItemRelevant(ch,i,o));
+}
+function allStatsCandidatePool(ch,o,separateBoot){
+  let a=DATA.statItems.filter(i=>allStatsItemRelevant(ch,i,o)&&(!separateBoot||!isBootItem(i)));
+  const forced=a.filter(i=>["Muramana","Seraph's Embrace","Sterak's Gage",'Sterak’s Gage',"Overlord's Bloodmail","Warmog's Armor","Rabadon's Deathcap",'Riftmaker',"Mejai's Soulstealer",'Imperial Mandate',"Jak'Sho, The Protean",'Radiant Virtue','Swiftmarch','Rod of Ages','Dawncore','Blackfire Torch','Staff of Flowing Water','Ardent Censer','Experimental Hexplate',"Shurelya's Battlesong",'Force of Nature','Terminus','Mercurial Scimitar',"Youmuu's Ghostblade",'Cosmic Drive','Spear of Shojin','Malignance','Stormrazor','Stridebreaker'].includes(i.name));
+  a=allStatsPareto(a,o,ch);for(const f of forced)if(!a.includes(f))a.push(f);
+  return [...new Map(a.map(i=>[i.id,i])).values()];
+}
+function allStatsSinglePotential(ch,i,o){return allStatsState(ch,[i],o,{peak:true}).score-allStatsState(ch,[],o,{peak:true}).score;}
+const ALLSTATS_THRESHOLD_CONFIG={
+  ad:{start:100,step:5,unit:' AD'},
+  ap:{start:150,step:5,unit:' AP'},
+  ah_no_mandate:{start:40,step:5,unit:' AH'},
+  ah_mandate:{start:40,step:5,unit:' AH'},
+  lethality:{start:25,step:1,unit:' Lethality'},
+  magic_pen_flat:{start:25,step:1,unit:' Magic Pen'},
+  ms:{start:6,step:1,unit:'% MS'},
+  as:{start:70,step:5,unit:'% AS'},
+  armor:{start:100,step:5,unit:' Armor'},
+  mr:{start:100,step:5,unit:' MR'},
+  hp:{start:1500,step:50,unit:' HP'}
+};
+function allStatsThresholdMetric(item,o){
+  if(o==='ad')return Number(item.ad||0);
+  if(o==='ap')return Number(item.ap||0);
+  // Only visible general AH parsed from Riot's <stats> block. Basic/ultimate haste is intentionally ignored.
+  if(o==='ah_no_mandate'||o==='ah_mandate')return Number(item.ah||0);
+  if(o==='lethality')return Number(item.lethality||0);
+  if(o==='magic_pen_flat')return Number(item.magicPenFlat||0);
+  if(o==='ms')return Number(item.msPct||0);
+  if(o==='as')return Number(item.as||0);
+  if(o==='armor')return Number(item.armor||0);
+  if(o==='mr')return Number(item.mr||0);
+  return Number(item.hp||0);
+}
+function allStatsThresholdPool(ch,o){
+  return DATA.statItems.filter(item=>{
+    if(isBootItem(item))return false;
+    if(!allStatsCompatible(ch,item,o))return false;
+    if(o==='ah_no_mandate'&&item.name==='Imperial Mandate')return false;
+    if(o==='ah_mandate'&&item.name==='Imperial Mandate')return false; // inserted first as mandatory
+    return allStatsThresholdMetric(item,o)>0;
+  });
+}
+function allStatsBuildWithBoot(build,boot){return boot?[...build,boot]:[...build];}
+function allStatsThresholdFill(ch,o,itemSlots,boot,peak,mandate){
+  const cfg=ALLSTATS_THRESHOLD_CONFIG[o],chosen=[],groups=new Set(),trace=[];
+  if(boot)boot.purchaseGroups.forEach(g=>groups.add(g));
+  if(mandate){
+    if(itemSlots<1||!allStatsLegalAdd(mandate,groups,chosen,ch,o))return null;
+    chosen.push(mandate);mandate.purchaseGroups.forEach(g=>groups.add(g));
+    trace.push(`Mandatory Imperial Mandate (${fmt(mandate.ah,0)} visible AH)`);
+  }
+  const pool=allStatsThresholdPool(ch,o).filter(i=>!boot||i.id!==boot.id);
+  const used=new Set(chosen.map(i=>i.id));
+  for(let threshold=cfg.start;threshold>=0&&chosen.length<itemSlots;threshold-=cfg.step){
+    const lower=threshold-cfg.step;
+    const tier=pool.filter(i=>!used.has(i.id)&&allStatsThresholdMetric(i,o)>lower+1e-9&&(threshold===cfg.start||allStatsThresholdMetric(i,o)<=threshold+1e-9));
+    while(tier.length&&chosen.length<itemSlots){
+      const legal=tier.filter(i=>!used.has(i.id)&&allStatsLegalAdd(i,groups,chosen,ch,o));
+      if(!legal.length)break;
+      legal.sort((a,b)=>{
+        const ma=allStatsThresholdMetric(a,o),mb=allStatsThresholdMetric(b,o);if(Math.abs(mb-ma)>1e-9)return mb-ma;
+        const sa=allStatsState(ch,allStatsBuildWithBoot([...chosen,a],boot),o,{level:allStatsLevel(),peak}).score;
+        const sb=allStatsState(ch,allStatsBuildWithBoot([...chosen,b],boot),o,{level:allStatsLevel(),peak}).score;
+        if(Math.abs(sb-sa)>1e-9)return sb-sa;
+        if((b.totalCost||0)!==(a.totalCost||0))return (b.totalCost||0)-(a.totalCost||0);
+        return a.name.localeCompare(b.name);
+      });
+      const pick=legal[0],metric=allStatsThresholdMetric(pick,o);
+      chosen.push(pick);used.add(pick.id);pick.purchaseGroups.forEach(g=>groups.add(g));
+      trace.push(`${pick.name}: ${fmt(metric,metric%1?1:0)}${cfg.unit} at ${fmt(threshold,0)} tier`);
+    }
+  }
+  const full=allStatsBuildWithBoot(chosen,boot),state=allStatsState(ch,full,o,{level:allStatsLevel(),peak});
+  return {ids:full.map(i=>i.id),score:state.score,cost:state.cost,parts:[...state.parts,`Threshold path: ${trace.join(' → ')}`],filled:chosen.length,trace};
+}
+async function optimizeAllStats(){
+  if(!DATA.loaded)return;
+  const btn=document.getElementById('allstats-optimize-btn'),status=document.getElementById('allstats-optimizer-status'),box=document.getElementById('allstats-results'),ch=selectedAllStatsChampion(),o=allStatsObjective(),slots=clamp(Math.round(val('allstats-slots',6)),1,6),lane=allStatsLane(),separate=lane==='bot',peak=!!val('allstats-peak',1),cfg=ALLSTATS_THRESHOLD_CONFIG[o];
+  btn.disabled=true;box.innerHTML='';status.textContent='Optimizing…';
+  try{
+    const detail=await ensureChampionDetail(ch);
+    if(o==='ah_mandate'&&!detailHasImmobilize(detail)){
+      box.innerHTML='<div class="warning-box">This champion has no immobilizing ability in Riot\'s spell data, so Imperial Mandate\'s Control haste cannot be used. Select the no-Mandate objective.</div>';status.textContent='Mandate condition unavailable.';return;
+    }
+    const mandate=DATA.statItems.find(i=>i.name==='Imperial Mandate'&&!isBootItem(i))||null;
+    if(o==='ah_mandate'&&!mandate)throw new Error('Imperial Mandate not found in canonical Summoner\'s Rift item data.');
+    const bootOptions=[null,...allStatsBootOptions(ch,o,lane)],rows=[];
+    for(const boot of bootOptions){
+      const itemSlots=slots-(boot&&!separate?1:0);if(itemSlots<0)continue;
+      const row=allStatsThresholdFill(ch,o,itemSlots,boot,peak,o==='ah_mandate'?mandate:null);if(row)rows.push(row);
+    }
+    rows.sort((a,b)=>b.score-a.score||b.filled-a.filled||b.cost-a.cost);const top=rows.slice(0,5);
+    ALLSTATS_RESULT.rows=top;ALLSTATS_RESULT.objective=o;ALLSTATS_RESULT.championId=ch.id;
+    renderAllStatsResults(top,ch,o,slots,lane,peak,allStatsThresholdPool(ch,o).length,bootOptions.length);
+    status.textContent='Done.';
+  }catch(e){console.error(e);status.textContent=`Optimizer error: ${e.message}`;box.innerHTML=`<div class="warning-box">${escapeHtml(e.message)}</div>`;}finally{btn.disabled=false;}
+}
+function renderAllStatsResults(rows,ch,o,slots,lane,peak,candidateCount,bootVariants){
+  const box=document.getElementById('allstats-results'),meta=allStatsObjectiveMeta(o),cfg=ALLSTATS_THRESHOLD_CONFIG[o];if(!rows.length){box.innerHTML='<div class="warning-box">No legal threshold-filled build satisfies the selected conditions.</div>';return;}
+  const best=rows[0],laneLabel=allStatsLaneLabel(lane),bootRule=lane==='bot'?`${slots} inventory slots + a separate standard-boot quest slot`:lane==='mid'?`${slots} inventory slots; enhanced tier-3 boots consume one slot`:`${slots} inventory slots; standard tier-2 boots consume one slot`;box.innerHTML=`<div class="allstats-summary"><div class="allstats-kpi"><div class="k">Champion / Lane</div><div class="v">${escapeHtml(ch.name)} · ${escapeHtml(laneLabel)}</div></div><div class="allstats-kpi"><div class="k">Best threshold result: ${escapeHtml(meta[0])}</div><div class="v">${fmt(best.score,o==='as'?3:1)}${escapeHtml(meta[1])}</div></div><div class="allstats-kpi"><div class="k">Threshold rule</div><div class="v">${fmt(cfg.start,0)}→0</div><div class="stat-sub">step ${fmt(cfg.step,0)} · ${fmt(candidateCount)} direct-stat items · ${fmt(bootVariants)} legal boot variants</div></div></div><div class="optimizer-note">${escapeHtml(meta[2])} ${escapeHtml(bootRule)}</div><div class="top-builds">${rows.map((r,n)=>`<div class="build-row"><div class="build-rank">#${n+1}</div><div class="build-items">${r.ids.map(id=>{const i=DATA.statById.get(id)||DATA.byId.get(id);return i?`<span class="build-chip"><img src="${itemIcon(i)}" alt="">${escapeHtml(i.name)}</span>`:'';}).join('')}<div class="optimizer-note" style="width:100%;margin-top:4px">${r.parts.map(escapeHtml).join(' · ')}</div></div><div><div class="build-score">${fmt(r.score,o==='as'?3:1)}${escapeHtml(meta[1])}</div><div class="build-cost">${fmt(r.cost)}g item value</div></div></div>`).join('')}</div>`;
+}
+function renderAllStatsPreview(){
+  const box=document.getElementById('allstats-preview'),desc=document.getElementById('allstats-objective-description');if(!box||!DATA.loaded)return;const ch=selectedAllStatsChampion(),o=allStatsObjective(),b=allStatsBase(ch),meta=allStatsObjectiveMeta(o),lane=allStatsLane();desc.textContent=meta[2];
+  const baseValue=o==='ad'?b.ad:o==='ap'?0:o.startsWith('ah_')?0:o==='lethality'||o==='magic_pen_flat'?0:o==='ms'?b.ms:o==='as'?Math.min(allStatsAttackSpeedCap(ch),b.asBase*(1+b.asGrowth/100)):o==='armor'?b.armor:o==='mr'?b.mr:b.hp;
+  const bootRule=lane==='bot'?'Standard tier-2 boots use the separate seventh quest slot':lane==='mid'?'Enhanced tier-3 boots are available and consume one inventory slot':'Standard tier-2 boots consume one inventory slot';
+  box.innerHTML=`<div class="allstats-summary"><div class="allstats-kpi"><div class="k">Level ${b.level} baseline</div><div class="v">${fmt(baseValue,o==='as'?3:1)}${escapeHtml(meta[1])}</div></div><div class="allstats-kpi"><div class="k">Champion / Lane</div><div class="v" style="font-size:13px">${escapeHtml(ch.name)} · ${escapeHtml(allStatsLaneLabel(lane))}</div><div class="stat-sub">${escapeHtml(b.partype||'No resource')} · ${b.ranged?'ranged':'melee'}</div></div><div class="allstats-kpi"><div class="k">Boot rule</div><div class="v" style="font-size:12px">${escapeHtml(bootRule)}</div></div>${o==='ad'?`<div class="allstats-kpi"><div class="k">AD growth source</div><div class="v" style="font-size:12px">${fmt(b.adGrowth.value,2)}/lvl</div><div class="stat-sub">${escapeHtml(b.adGrowth.source)}</div></div>`:''}</div>`;
+}
+
+function exportNormalized(){
+  const payload={source:DATA.source,version:DATA.version,generatedAt:new Date().toISOString(),audit:DATA.audit,eligibleSummonersRiftItems:DATA.items.map(({raw,...i})=>i),finalSummonersRiftItemIds:DATA.items.map(i=>i.id)};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`riot-items-normalized-${DATA.version}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function switchChamp(id,button){document.querySelectorAll('.champion-panel').forEach(p=>p.classList.remove('active'));document.getElementById(`panel-${id}`).classList.add('active');document.querySelectorAll('.champion-btn').forEach(b=>b.className='champion-btn');(button||document.querySelector(`.champion-btn[onclick*="${id}"]`))?.classList.add(`active-${id}`);}
+
+// Upgrade legacy inline calls so they do not depend on window.event.
+document.querySelectorAll('.champion-btn').forEach(b=>{const m=(b.getAttribute('onclick')||'').match(/switchChamp\('([^']+)'\)/);if(m)b.setAttribute('onclick',`switchChamp('${m[1]}',this)`);});
+document.getElementById('export-normalized').addEventListener('click',exportNormalized);
+document.getElementById('refresh-riot').addEventListener('click',()=>loadRiotData({force:true}));
+renderAllStatsObjectivePills();
+document.getElementById('local-item-json').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{const j=JSON.parse(await f.text());applyRiotJson(j,null,j.version||FALLBACK_DDRAGON_VERSION,`local file: ${f.name}`);setDataStatus('warn','Using local item.json');}catch(err){setDataStatus('bad',`Invalid JSON: ${err.message}`);}});
+renderLoadingItems('Checking current Riot Data Dragon…');
+loadRiotData().finally(startAutoUpdates);
+</script>
+</body>
+</html>
